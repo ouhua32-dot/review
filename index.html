@@ -1,0 +1,1770 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bambu Lab 用户评价分析报告</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F8FAFC;color:#1E293B;font-size:14px}
+.header{background:linear-gradient(135deg,#1E3A5F 0%,#2563EB 100%);color:#fff;padding:20px 24px 16px}
+.header h1{font-size:22px;font-weight:700;margin-bottom:4px}
+.header p{font-size:13px;opacity:.85;margin-bottom:10px}
+.header-meta{display:flex;flex-wrap:wrap;gap:8px}
+.meta-badge{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:3px 12px;font-size:12px}
+.tabs{display:flex;justify-content:space-between;align-items:center;background:#fff;border-bottom:2px solid #E2E8F0;padding:0 16px 0 0;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.tabs-left{display:flex}
+.tab-btn{padding:14px 22px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:500;color:#64748B;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s;white-space:nowrap}
+.tab-btn.active{color:#2563EB;border-bottom-color:#2563EB;font-weight:600}
+.tab-btn:hover{color:#2563EB}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.container{max-width:1400px;margin:0 auto;padding:20px 24px}
+.section{background:#fff;border-radius:12px;border:1px solid #E2E8F0;padding:20px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.section-title{font-size:15px;font-weight:700;color:#1E293B;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #EFF6FF}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-top:8px}
+.stat-card{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:14px;text-align:center}
+.stat-card.neg{background:#FEF2F2;border-color:#FECACA}
+.stat-card.pos{background:#F0FDF4;border-color:#BBF7D0}
+.stat-card.warn{background:#FFFBEB;border-color:#FDE68A}
+.stat-card .num,.stat-card .stat-value{font-size:24px;font-weight:700;color:#1E293B;line-height:1.2}
+.stat-card .label,.stat-card .stat-label{font-size:12px;color:#64748B;margin-top:4px}
+.charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;margin-top:8px}
+.chart-box{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:16px}
+.chart-box.wide{grid-column:1/-1}
+.chart-title,.chart-box h4{font-size:13px;font-weight:600;color:#374151;margin-bottom:12px;text-align:center}
+.chart-box canvas{max-height:260px}
+.chart-note{margin-top:10px;padding:8px 12px;background:#F0F9FF;border-left:3px solid #3B82F6;border-radius:0 6px 6px 0;cursor:pointer;transition:background .2s}
+.chart-note:hover{background:#E0F2FE}
+.chart-note ul{margin:0;padding-left:16px;list-style:disc}
+.chart-note li{font-size:11px;color:#475569;line-height:1.6;margin-bottom:2px}
+.chart-note textarea{width:100%;min-height:80px;font-size:11px;color:#475569;border:1px solid #93C5FD;border-radius:4px;padding:6px;resize:vertical;background:#fff;outline:none;box-sizing:border-box}
+.chart-note .note-hint{font-size:10px;color:#94A3B8;margin-top:4px}
+.notice{background:#FEF9C3;border:1px solid #FDE047;border-radius:8px;padding:10px 14px;font-size:12px;color:#713F12;margin-bottom:16px}
+.filter-bar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;align-items:center}
+.filter-bar select,.filter-bar input{padding:7px 12px;border:1px solid #D1D5DB;border-radius:8px;font-size:13px;background:#fff;color:#374151;outline:none}
+.filter-bar select:focus,.filter-bar input:focus{border-color:#2563EB;box-shadow:0 0 0 2px rgba(37,99,235,.15)}
+.filter-bar input{width:220px}
+.period-selector{display:flex;align-items:center;gap:10px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:10px 16px;margin-bottom:16px;flex-wrap:wrap}
+.period-selector label{font-size:13px;font-weight:600;color:#1D4ED8;white-space:nowrap}
+.period-selector select{padding:6px 12px;border:1px solid #93C5FD;border-radius:8px;font-size:13px;background:#fff;color:#1E293B;outline:none;font-weight:500}
+.period-selector select:focus{border-color:#2563EB;box-shadow:0 0 0 2px rgba(37,99,235,.15)}
+.period-info{font-size:12px;color:#3B82F6;margin-left:4px}
+
+/* 多选周次下拉 */
+.multi-week-wrapper{position:relative;display:inline-block}
+.multi-week-trigger{display:flex;align-items:center;gap:8px;padding:6px 12px;border:1px solid #93C5FD;border-radius:8px;font-size:13px;background:#fff;color:#1E293B;cursor:pointer;min-width:240px;user-select:none;font-weight:500}
+.multi-week-trigger:hover{border-color:#2563EB}
+.multi-week-trigger .arrow{margin-left:auto;font-size:10px;color:#64748B;transition:transform .2s}
+.multi-week-trigger.open .arrow{transform:rotate(180deg)}
+.multi-week-dropdown{display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:100%;background:#fff;border:1px solid #BFDBFE;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:200;padding:6px 0;max-height:280px;overflow-y:auto}
+.multi-week-dropdown.open{display:block}
+.multi-week-option{display:flex;align-items:center;gap:8px;padding:7px 14px;cursor:pointer;font-size:13px;color:#374151;transition:background .15s}
+.multi-week-option:hover{background:#EFF6FF}
+.multi-week-option input[type=checkbox]{accent-color:#2563EB;width:14px;height:14px;cursor:pointer}
+.multi-week-option label{cursor:pointer;flex:1}
+.multi-week-actions{display:flex;gap:8px;padding:8px 14px 4px;border-top:1px solid #E2E8F0;margin-top:4px}
+.multi-week-actions button{flex:1;padding:5px 0;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid #D1D5DB;background:#F8FAFC;color:#374151}
+.multi-week-actions button:hover{background:#EFF6FF;border-color:#2563EB;color:#2563EB}
+
+.data-table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{background:#1E3A5F;color:#fff;padding:10px 12px;text-align:left;font-weight:600;white-space:nowrap;position:sticky;top:0;z-index:2}
+td{padding:9px 12px;border-bottom:1px solid #E2E8F0;vertical-align:top;line-height:1.5}
+tr:hover td{background:#EFF6FF}
+tr.pending td{background:#FFFBEB}
+tr.pending:hover td{background:#FEF3C7}
+.sentiment-badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500;white-space:nowrap}
+.badge-neg{background:#FEE2E2;color:#B91C1C}
+.badge-pos{background:#DCFCE7;color:#15803D}
+.badge-neu{background:#F3F4F6;color:#374151}
+.badge-mix{background:#E0F2FE;color:#0369A1}
+.issue-tag{display:inline-block;background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;border-radius:4px;padding:1px 6px;font-size:11px;margin:1px 2px;cursor:default}
+.issue-tag.pending{background:#FEF9C3;color:#92400E;border-color:#FDE68A}
+.expand-btn{color:#2563EB;cursor:pointer;font-size:11px;white-space:nowrap;background:none;border:none;padding:0;margin-top:4px;display:block}
+.text-preview{max-height:60px;overflow:hidden;transition:max-height .3s}
+.text-preview.expanded{max-height:none}
+.pagination{display:flex;gap:6px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+.page-btn{padding:6px 12px;border:1px solid #D1D5DB;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;color:#374151}
+.page-btn.active{background:#2563EB;color:#fff;border-color:#2563EB}
+.page-btn:hover:not(.active){background:#EFF6FF;border-color:#2563EB}
+.edit-cell{position:relative}
+.issue-editor{display:none;position:absolute;z-index:100;background:#fff;border:1px solid #2563EB;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:12px;min-width:280px;max-width:360px;left:0;top:100%}
+.issue-editor.show{display:block}
+.issue-editor h5{font-size:12px;font-weight:600;color:#374151;margin-bottom:8px}
+.issue-checkboxes{max-height:200px;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:10px}
+.issue-checkboxes label{display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;padding:3px 4px;border-radius:4px}
+.issue-checkboxes label:hover{background:#EFF6FF}
+.issue-checkboxes input[type=checkbox]{accent-color:#2563EB}
+.editor-actions{display:flex;gap:8px}
+.btn-save{background:#2563EB;color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:12px;cursor:pointer;font-weight:500}
+.btn-save:hover{background:#1D4ED8}
+.btn-cancel{background:#F1F5F9;color:#374151;border:1px solid #D1D5DB;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer}
+.btn-cancel:hover{background:#E2E8F0}
+.edited-mark{color:#F59E0B;font-size:10px;margin-left:4px}
+.issue-chart-wrap{overflow-x:auto}
+.issue-chart-wrap canvas{min-width:600px}
+.loading-overlay{display:flex;align-items:center;justify-content:center;padding:40px;color:#64748B;font-size:14px}
+@media(max-width:768px){
+  .charts-grid{grid-template-columns:1fr}
+  .header h1{font-size:18px}
+  .filter-bar{flex-direction:column;align-items:stretch}
+  .filter-bar input{width:100%}
+  .tab-btn{padding:10px 14px;font-size:13px}
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Bambu Lab 用户评价分析报告</h1>
+  <p>公开社区评论 · 满意度差评工单 · 满意度问卷数据整理</p>
+  <div class="header-meta" id="header-meta">
+    <span class="meta-badge">📅 数据持续更新中</span>
+    <span class="meta-badge">💬 公开评论：多月份</span>
+    <span class="meta-badge">📋 差评工单：W9-W16</span>
+    <span class="meta-badge">📊 满意度问卷：W9-W16</span>
+    <span class="meta-badge">🌐 来源：Reddit · YouTube · Trustpilot · 工单系统</span>
+  </div>
+</div>
+<div class="tabs">
+  <div class="tabs-left">
+    <button class="tab-btn active" onclick="switchTab('public')">📢 公开评论</button>
+    <button class="tab-btn" onclick="switchTab('complaint')">📋 满意度差评</button>
+    <button class="tab-btn" onclick="switchTab('survey')">📊 满意度问卷</button>
+  </div>
+  <button id="btn-share-link" onclick="copyShareLink()" style="padding:8px 18px;background:#059669;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;margin:8px 0" title="复制只读分享链接，接收方无需编辑权限即可查看">🔗 复制分享链接</button>
+  <div id="readonly-badge" style="display:none;align-items:center;gap:6px;padding:6px 14px;background:#F59E0B;color:#fff;border-radius:8px;font-size:13px;font-weight:600;white-space:nowrap;margin:8px 0">🟠 只读模式</div>
+</div>
+
+<!-- ==================== TAB 1: 公开评论 ==================== -->
+<div id="tab-public" class="tab-content active">
+<div class="container">
+  <div class="period-selector">
+    <label>📅 选择月份：</label>
+    <div class="multi-week-wrapper" id="pub-month-wrapper">
+      <div class="multi-week-trigger" id="pub-month-trigger" onclick="toggleMultiWeek('pub')">
+        <span id="pub-month-label">加载中…</span>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="multi-week-dropdown" id="pub-month-dropdown">
+        <div id="pub-month-options"></div>
+        <div class="multi-week-actions">
+          <button onclick="selectAllWeeks('pub')">全选</button>
+          <button onclick="clearAllWeeks('pub')">清空</button>
+          <button onclick="confirmWeekSelection('pub')" style="background:#2563EB;color:#fff;border-color:#2563EB">确认</button>
+        </div>
+      </div>
+    </div>
+    <span class="period-info" id="pub-period-info"></span>
+  </div>
+  <div class="section">
+    <div class="section-title">数据总览</div>
+    <div class="stats-grid" id="pub-stats"></div>
+  </div>
+  <div class="section">
+    <div class="section-title">数据图表</div>
+    <div class="charts-grid">
+      <div class="chart-box"><h4>情感倾向分布</h4><canvas id="p-chartSentiment"></canvas>
+        <div class="chart-note" id="note-p-chartSentiment" onclick="editChartNote(this,'public')" title="点击编辑说明"><ul id="auto-note-p-chartSentiment"><li>正在计算分析数据…</li></ul></div>
+      </div>
+      <div class="chart-box"><h4>评论来源平台</h4><canvas id="p-chartPlatform"></canvas>
+        <div class="chart-note" id="note-p-chartPlatform" onclick="editChartNote(this,'public')" title="点击编辑说明"><ul id="auto-note-p-chartPlatform"><li>正在计算分析数据…</li></ul></div>
+      </div>
+      <div class="chart-box"><h4>问题类别分布</h4><canvas id="p-chartCategory"></canvas>
+        <div class="chart-note" id="note-p-chartCategory" onclick="editChartNote(this,'public')" title="点击编辑说明"><ul id="auto-note-p-chartCategory"><li>正在计算分析数据…</li></ul></div>
+      </div>
+
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">问题类型分布（按标签出现频次统计，多选）</div>
+    <div class="charts-grid" style="margin-top:8px">
+      <div class="chart-box">
+        <h4>全部问题类型</h4>
+        <canvas id="p-chartIssuePieAll" style="max-height:260px"></canvas>
+        <div class="chart-note" id="note-p-chartIssuePieAll" onclick="editChartNote(this,'public')" title="点击编辑说明"><ul id="auto-note-p-chartIssuePieAll"><li>正在计算分析数据…</li></ul></div>
+      </div>
+      <div class="chart-box">
+        <h4>物流相关问题类型</h4>
+        <canvas id="p-chartIssuePieLog" style="max-height:260px"></canvas>
+        <div class="chart-note" id="note-p-chartIssuePieLog" onclick="editChartNote(this,'public')" title="点击编辑说明"><ul id="auto-note-p-chartIssuePieLog"><li>正在计算分析数据…</li></ul></div>
+      </div>
+      <div class="chart-box">
+        <h4>客服相关问题类型</h4>
+        <canvas id="p-chartIssuePieSvc" style="max-height:260px"></canvas>
+        <div class="chart-note" id="note-p-chartIssuePieSvc" onclick="editChartNote(this,'public')" title="点击编辑说明"><ul id="auto-note-p-chartIssuePieSvc"><li>正在计算分析数据…</li></ul></div>
+      </div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">国家 × 问题类别占比</div>
+    <div class="notice" id="pub-notice">📌 数据来源：Reddit r/BambuLab · YouTube评论区 · Trustpilot</div>
+    <div class="charts-grid">
+      <div class="chart-box"><h4>国家/地区分布</h4><canvas id="p-chartCountry"></canvas></div>
+      <div class="chart-box"><h4>各国家/地区 × 问题类别堆叠</h4><canvas id="p-chartCountryCat"></canvas></div>
+      <div class="chart-box wide"><h4>各类别情感倾向对比</h4><canvas id="p-chartCatSentiment" style="max-height:220px"></canvas></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">原始数据浏览</div>
+    <div class="filter-bar">
+      <select id="p-fSentiment" onchange="renderPubTable()"><option value="">全部情感</option></select>
+      <select id="p-fPlatform" onchange="renderPubTable()"><option value="">全部平台</option></select>
+      <select id="p-fCategory" onchange="renderPubTable()"><option value="">全部类别</option></select>
+      <select id="p-fCountry" onchange="renderPubTable()"><option value="">全部国家</option></select>
+      <select id="p-fIssueType" onchange="renderPubTable()"><option value="">全部问题类型</option></select>
+      <input type="text" id="p-search" placeholder="搜索关键词…" oninput="renderPubTable()">
+    </div>
+    <div class="data-table-wrap" id="pub-table-wrap"></div>
+    <div class="pagination" id="pub-pagination"></div>
+  </div>
+</div>
+</div>
+
+<!-- ==================== TAB 2: 差评工单 ==================== -->
+<div id="tab-complaint" class="tab-content">
+<div class="container">
+  <!-- 多选周次选择器 -->
+  <div class="period-selector">
+    <label>📅 选择周次：</label>
+    <div class="multi-week-wrapper" id="comp-week-wrapper">
+      <div class="multi-week-trigger" id="comp-week-trigger" onclick="toggleMultiWeek('comp')">
+        <span id="comp-week-label">加载中…</span>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="multi-week-dropdown" id="comp-week-dropdown">
+        <div id="comp-week-options"></div>
+        <div class="multi-week-actions">
+          <button onclick="selectAllWeeks('comp')">全选</button>
+          <button onclick="clearAllWeeks('comp')">清空</button>
+          <button onclick="confirmWeekSelection('comp')" style="background:#2563EB;color:#fff;border-color:#2563EB">确认</button>
+        </div>
+      </div>
+    </div>
+    <span class="period-info" id="comp-period-info"></span>
+  </div>
+  <div class="section">
+    <div class="section-title">数据总览</div>
+    <div class="notice" id="comp-notice">📌 数据来源：Bambu Lab 差评工单。问题类型由 GPT 语义匹配初始标注，标注 <span style="background:#FEF9C3;padding:1px 5px;border-radius:3px;color:#92400E">待确认</span> 的条目可在下方表格中手动编辑并保存。</div>
+    <div class="stats-grid" id="comp-stats"></div>
+  </div>
+  <div class="section">
+    <div class="section-title">数据图表</div>
+    <div class="charts-grid">
+      <div class="chart-box"><h4>问题类别分布</h4><canvas id="c-chartCategory"></canvas>
+        <div class="chart-note" id="note-c-chartCategory" onclick="editChartNote(this,'complaint')" title="点击编辑说明"><ul id="auto-note-c-chartCategory"><li>正在计算分析数据…</li></ul></div>
+      </div>
+      <div class="chart-box"><h4>地区分布</h4><canvas id="c-chartRegion"></canvas>
+        <div class="chart-note" id="note-c-chartRegion" onclick="editChartNote(this,'complaint')" title="点击编辑说明"><ul id="auto-note-c-chartRegion"><li>正在计算分析数据…</li></ul></div>
+      </div>
+      <div class="chart-box"><h4>各地区 × 问题类别堆叠</h4><canvas id="c-chartRegionCat"></canvas>
+        <div class="chart-note" id="note-c-chartRegionCat" onclick="editChartNote(this,'complaint')" title="点击编辑说明"><ul id="auto-note-c-chartRegionCat"><li>正在计算分析数据…</li></ul></div>
+      </div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">问题类型分布（按标签出现频次统计，多选）</div>
+    <div class="charts-grid" style="margin-top:8px">
+      <div class="chart-box">
+        <h4>全部问题类型</h4>
+        <canvas id="c-chartIssuePieAll" style="max-height:260px"></canvas>
+        <div class="chart-note" id="note-c-chartIssuePieAll" onclick="editChartNote(this,'complaint')" title="点击编辑说明"><ul id="auto-note-c-chartIssuePieAll"><li>正在计算分析数据…</li></ul></div>
+      </div>
+      <div class="chart-box">
+        <h4>物流相关问题类型</h4>
+        <canvas id="c-chartIssuePieLog" style="max-height:260px"></canvas>
+        <div class="chart-note" id="note-c-chartIssuePieLog" onclick="editChartNote(this,'complaint')" title="点击编辑说明"><ul id="auto-note-c-chartIssuePieLog"><li>正在计算分析数据…</li></ul></div>
+      </div>
+      <div class="chart-box">
+        <h4>客服相关问题类型</h4>
+        <canvas id="c-chartIssuePieSvc" style="max-height:260px"></canvas>
+        <div class="chart-note" id="note-c-chartIssuePieSvc" onclick="editChartNote(this,'complaint')" title="点击编辑说明"><ul id="auto-note-c-chartIssuePieSvc"><li>正在计算分析数据…</li></ul></div>
+      </div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">各地区 × 问题类型占比</div>
+    <div class="charts-grid">
+      <div class="chart-box wide"><h4>各地区问题类型百分比堆叠（按标签频次）</h4><canvas id="c-chartCountryPct" style="max-height:300px"></canvas></div>
+      <div class="chart-box"><h4>物流相关问题占比（各地区）</h4><canvas id="c-chartLogPct"></canvas></div>
+      <div class="chart-box"><h4>客服相关问题占比（各地区）</h4><canvas id="c-chartSvcPct"></canvas></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">原始数据浏览（点击 ✏ 编辑 可修改问题类型，修改后自动保存）</div>
+    <div class="filter-bar">
+      <select id="c-fCategory" onchange="renderCompTable()"><option value="">全部类别</option></select>
+      <select id="c-fRegion" onchange="renderCompTable()"><option value="">全部地区</option></select>
+      <select id="c-fIssueType" onchange="renderCompTable()"><option value="">全部问题类型</option></select>
+      <select id="c-fPending" onchange="renderCompTable()">
+        <option value="">全部状态</option>
+        <option value="pending">仅待确认</option>
+        <option value="edited">已手动编辑</option>
+      </select>
+      <input type="text" id="c-search" placeholder="搜索关键词…" oninput="renderCompTable()">
+    </div>
+    <div class="data-table-wrap" id="comp-table-wrap"></div>
+    <div class="pagination" id="comp-pagination"></div>
+  </div>
+</div>
+</div>
+
+<!-- ==================== TAB 3: 满意度问卷 ==================== -->
+<div id="tab-survey" class="tab-content">
+<div class="container">
+  <!-- 多选周次选择器 -->
+  <div class="period-selector">
+    <label>📅 选择周次：</label>
+    <div class="multi-week-wrapper" id="survey-week-wrapper">
+      <div class="multi-week-trigger" id="survey-week-trigger" onclick="toggleMultiWeek('survey')">
+        <span id="survey-week-label">加载中…</span>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="multi-week-dropdown" id="survey-week-dropdown">
+        <div id="survey-week-options"></div>
+        <div class="multi-week-actions">
+          <button onclick="selectAllWeeks('survey')">全选</button>
+          <button onclick="clearAllWeeks('survey')">清空</button>
+          <button onclick="confirmWeekSelection('survey')" style="background:#2563EB;color:#fff;border-color:#2563EB">确认</button>
+        </div>
+      </div>
+    </div>
+    <span class="period-info" id="survey-period-info"></span>
+  </div>
+  <div class="section">
+    <div class="section-title">数据总览</div>
+    <div class="stats-grid" id="survey-stats-grid"></div>
+  </div>
+  <div class="section">
+    <div class="section-title">数据图表</div>
+    <div class="charts-grid">
+      <div class="chart-box"><div class="chart-title">服务满意度均分趋势（各日）</div><canvas id="s-chartSatTrend"></canvas>
+        <div class="chart-note" id="note-s-chartSatTrend" onclick="editChartNote(this,'survey')" title="点击编辑说明"><ul id="auto-note-s-chartSatTrend"><li>正在计算分析数据…</li></ul></div>
+      </div>
+      <div class="chart-box"><div class="chart-title">评分分布（1-5分堆积）</div><canvas id="s-chartSatDist"></canvas>
+        <div class="chart-note" id="note-s-chartSatDist" onclick="editChartNote(this,'survey')" title="点击编辑说明"><ul id="auto-note-s-chartSatDist"><li>正在计算分析数据…</li></ul></div>
+      </div>
+      <div class="chart-box"><div class="chart-title">推荐度评分均分趋势</div><canvas id="s-chartNpsTrend"></canvas>
+        <div class="chart-note" id="note-s-chartNpsTrend" onclick="editChartNote(this,'survey')" title="点击编辑说明"><ul id="auto-note-s-chartNpsTrend"><li>正在计算分析数据…</li></ul></div>
+      </div>
+      <div class="chart-box"><div class="chart-title">解决率 × 满意度均分</div><canvas id="s-chartResolved"></canvas>
+        <div class="chart-note" id="note-s-chartResolved" onclick="editChartNote(this,'survey')" title="点击编辑说明"><ul id="auto-note-s-chartResolved"><li>正在计算分析数据…</li></ul></div>
+      </div>
+      <div class="chart-box"><div class="chart-title">各 Region 满意度均分对比</div><canvas id="s-chartRegion"></canvas>
+        <div class="chart-note" id="note-s-chartRegion" onclick="editChartNote(this,'survey')" title="点击编辑说明"><ul id="auto-note-s-chartRegion"><li>正在计算分析数据…</li></ul></div>
+      </div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">客服绩效排名（满意度均分 + 推荐度均分）</div>
+    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:16px">
+      <canvas id="s-chartAgent" style="max-height:360px"></canvas>
+      <div class="chart-note" id="note-s-chartAgent" onclick="editChartNote(this,'survey')" title="点击编辑说明">
+        <ul id="auto-note-s-chartAgent"><li>正在计算分析数据…</li></ul>
+      </div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">原始数据浏览</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:center">
+      <select id="s-tRegion" onchange="renderSurveyTable()"><option value="">全部地区</option></select>
+      <select id="s-tResolved" onchange="renderSurveyTable()"><option value="">全部状态</option><option value="true">已解决</option><option value="false">未解决</option></select>
+      <select id="s-tSat" onchange="renderSurveyTable()"><option value="">全部评分</option><option value="low">低分(1-2★)</option><option value="high">高分(4-5★)</option></select>
+      <input type="text" id="s-tSearch" placeholder="搜索关键词…" oninput="renderSurveyTable()" style="flex:1;min-width:180px;padding:6px 10px;border:1px solid #E2E8F0;border-radius:6px;font-size:13px">
+    </div>
+    <div id="survey-filter-stats" style="font-size:12px;color:#64748B;margin-bottom:6px;padding:4px 8px;background:#F8FAFC;border-radius:6px;border:1px solid #E2E8F0"></div>
+    <div class="data-table-wrap" id="survey-table-wrap"></div>
+    <div class="pagination" id="survey-pagination"></div>
+  </div>
+</div>
+</div>
+
+<script src="data_config.js?v=20260421g"></script>
+<script>
+// ==================== 常量 ====================
+const ISSUE_TYPES = [
+  "客服响应速度慢","客服回复周期长","反复诊断但始终得不到解决","问题未解决，工单被提前关闭",
+  "AI回复体验差","退款/退货障碍","没有提供物流轨迹更新信息","企业客户体验不佳",
+  "耗材供应不稳定","发货延迟/ETD不准","超长收货时间","包裹丢失/未收到",
+  "包裹被误送","包裹被分批发货","物流供应商服务差","没有多语言支持",
+  "视频类支持很少","没有延保服务","缺少维修配件","维修配件补货慢",
+  "产品质量差","定价过高","发票问题","折扣优惠码使用有问题",
+  "运费太贵","网站信息混乱","待确认"
+];
+const LOGISTICS_TYPES = new Set(["发货延迟/ETD不准","超长收货时间","包裹丢失/未收到","包裹被误送","包裹被分批发货","物流供应商服务差","没有提供物流轨迹更新信息"]);
+const SERVICE_TYPES = new Set(["客服响应速度慢","客服回复周期长","反复诊断但始终得不到解决","问题未解决，工单被提前关闭","AI回复体验差","退款/退货障碍","企业客户体验不佳"]);
+const COLORS = ['#2563EB','#EF4444','#22C55E','#F59E0B','#8B5CF6','#EC4899','#06B6D4','#F97316','#10B981','#6366F1','#14B8A6','#F43F5E','#84CC16','#A855F7','#0EA5E9','#FB923C','#34D399','#818CF8','#2DD4BF','#FB7185','#A3E635','#C084FC','#38BDF8','#FDBA74','#6EE7B7','#A5B4FC','#5EEAD4'];
+const SAT_COLORS = {1:'#EF4444',2:'#F97316',3:'#EAB308',4:'#22C55E',5:'#3B82F6'};
+const PAGE_SIZE = 15;
+const SURVEY_PAGE_SIZE = 15;
+const ISSUE_TYPE_MAP = {
+  'Complaints and Suggestions': '投诉与建议',
+  'I have questions before placing an order': '下单前咨询',
+  'I have questions before I place an order': '下单前咨询',
+  'I need help after placing an order': '下单后需要帮助',
+};
+const TAG_MAP = {
+  'Service Experience': '客服体验',
+  'Logistics Experience': '物流体验',
+  'Product Experience': '产品体验',
+  'Website Experience': '网站体验',
+  'Order and Delivery': '订单与配送',
+  'After-sales Service Policy': '售后服务政策',
+  'Customer Service': '客服',
+  'Product Usage Experience': '产品使用体验',
+  'Others': '其他',
+};
+function translateIssueType(v) { return ISSUE_TYPE_MAP[v] || v || '-'; }
+function translateTag(v) { return TAG_MAP[v] || v || '-'; }
+
+// ==================== 状态 ====================
+let pubData = [];
+let compData = [];
+let surveyData = [];
+let pubPage = 1, compPage = 1, surveyTablePage = 1;
+let pubCharts = {}, compCharts = {}, surveyChartInstances = {};
+let activeEditor = null;
+let currentPubKey = '';
+// 多选周次状态
+let selectedPubMonths = [];   // 当前选中的公开评论月份 key 数组
+let selectedCompWeeks = [];   // 当前选中的差评工单周次 key 数组
+let selectedSurveyWeeks = []; // 当前选中的满意度问卷周次 key 数组
+
+// ==================== localStorage ====================
+function getChartNoteKey(tab, periodKey, noteId) {
+  return `bambu_note_${tab}_${periodKey}_${noteId}`;
+}
+function loadChartNotes(tab, periodKey) {
+  const prefix = `bambu_note_${tab}_${periodKey}_`;
+  for(let i=0; i<localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if(key && key.startsWith(prefix)) {
+      const noteId = key.slice(prefix.length);
+      const el = document.getElementById(noteId);
+      if(el) {
+        const content = localStorage.getItem(key);
+        if(content) {
+          el.innerHTML = `<ul>${content.split('\n').filter(l=>l.trim()).map(l=>`<li>${l.replace(/^[-•·]\s*/,'')}</li>`).join('')}</ul>`;
+        }
+      }
+    }
+  }
+}
+function editChartNote(el, tab) {
+  if(el.querySelector('textarea')) return;
+  const noteId = el.id;
+  const lis = el.querySelectorAll('li');
+  const currentText = [...lis].map(li=>li.textContent.trim()).join('\n');
+  const periodKey = tab==='public' ? currentPubKey : tab==='complaint' ? selectedCompWeeks.join('_') : selectedSurveyWeeks.join('_');
+  el.innerHTML = `<textarea placeholder="输入图表说明（每行一条）" onblur="saveChartNote('${noteId}','${tab}',this)">${currentText}</textarea><div class="note-hint">每行一条说明，失去焦点自动保存</div>`;
+  el.querySelector('textarea').focus();
+}
+function saveChartNote(noteId, tab, textarea) {
+  const text = textarea.value.trim();
+  const el = document.getElementById(noteId);
+  if(!el) return;
+  const periodKey = tab==='public' ? currentPubKey : tab==='complaint' ? selectedCompWeeks.join('_') : selectedSurveyWeeks.join('_');
+  const lsKey = getChartNoteKey(tab, periodKey, noteId);
+  localStorage.setItem(lsKey, text);
+  const lines = text.split('\n').filter(l=>l.trim());
+  if(lines.length > 0) {
+    el.innerHTML = `<ul>${lines.map(l=>`<li>${l.replace(/^[-•·]\s*/,'')}</li>`).join('')}</ul>`;
+  } else {
+    el.innerHTML = '<ul><li>（暂无说明，点击编辑）</li></ul>';
+  }
+}
+
+// ==================== 数据加载 ====================
+const loadedScripts = {};
+function loadDataScript(file, callback) {
+  if(loadedScripts[file]) { callback(); return; }
+  const script = document.createElement('script');
+  script.src = file;
+  script.onload = () => { loadedScripts[file] = true; callback(); };
+  script.onerror = () => { console.error('加载失败:', file); callback(); };
+  document.head.appendChild(script);
+}
+
+// 并行加载多个数据文件
+function loadMultipleDataScripts(files, callback) {
+  if(!files.length) { callback(); return; }
+  let loaded = 0;
+  files.forEach(file => {
+    loadDataScript(file, () => {
+      loaded++;
+      if(loaded === files.length) callback();
+    });
+  });
+}
+
+// ==================== 多选周次下拉组件 ====================
+function toggleMultiWeek(tab) {
+  const triggerId = tab === 'pub' ? 'pub-month-trigger' : `${tab}-week-trigger`;
+  const dropdownId = tab === 'pub' ? 'pub-month-dropdown' : `${tab}-week-dropdown`;
+  const trigger = document.getElementById(triggerId);
+  const dropdown = document.getElementById(dropdownId);
+  const isOpen = dropdown.classList.contains('open');
+  // 关闭所有下拉
+  document.querySelectorAll('.multi-week-dropdown').forEach(d => d.classList.remove('open'));
+  document.querySelectorAll('.multi-week-trigger').forEach(t => t.classList.remove('open'));
+  if(!isOpen) {
+    dropdown.classList.add('open');
+    trigger.classList.add('open');
+  }
+}
+
+function selectAllWeeks(tab) {
+  const containerId = tab === 'pub' ? 'pub-month-options' : `${tab}-week-options`;
+  document.querySelectorAll(`#${containerId} input[type=checkbox]`).forEach(cb => cb.checked = true);
+  if(tab === 'pub') onPubMonthCheckChange();
+  else if(tab === 'comp') onCompWeekCheckChange();
+  else onSurveyWeekCheckChange();
+}
+
+function clearAllWeeks(tab) {
+  const containerId = tab === 'pub' ? 'pub-month-options' : `${tab}-week-options`;
+  document.querySelectorAll(`#${containerId} input[type=checkbox]`).forEach(cb => cb.checked = false);
+  if(tab === 'pub') onPubMonthCheckChange();
+  else if(tab === 'comp') onCompWeekCheckChange();
+  else onSurveyWeekCheckChange();
+}
+
+function confirmWeekSelection(tab) {
+  const containerId = tab === 'pub' ? 'pub-month-options' : `${tab}-week-options`;
+  const checkboxes = document.querySelectorAll(`#${containerId} input[type=checkbox]:checked`);
+  const selectedKeys = [...checkboxes].map(cb => cb.value);
+  if(!selectedKeys.length) {
+    alert(tab === 'pub' ? '请至少选择一个月份' : '请至少选择一个周次');
+    return;
+  }
+  // 关闭下拉
+  const dropdownId = tab === 'pub' ? 'pub-month-dropdown' : `${tab}-week-dropdown`;
+  const triggerId = tab === 'pub' ? 'pub-month-trigger' : `${tab}-week-trigger`;
+  document.getElementById(dropdownId).classList.remove('open');
+  document.getElementById(triggerId).classList.remove('open');
+  
+  if(tab === 'pub') {
+    selectedPubMonths = selectedKeys;
+    onPubMonthsChange();
+  } else if(tab === 'comp') {
+    selectedCompWeeks = selectedKeys;
+    onCompWeeksChange();
+  } else {
+    selectedSurveyWeeks = selectedKeys;
+    onSurveyWeeksChange();
+  }
+}
+
+function updateMultiWeekLabel(tab, selectedKeys) {
+  let labelEl;
+  if(tab === 'pub') {
+    labelEl = document.getElementById('pub-month-label');
+  } else {
+    labelEl = document.getElementById(`${tab}-week-label`);
+  }
+  if(!labelEl) return;
+  if(!selectedKeys.length) {
+    labelEl.textContent = tab === 'pub' ? '请选择月份' : '请选择周次';
+    return;
+  }
+  const cfg = window.REPORT_CONFIG;
+  const items = tab === 'comp' ? cfg.complaintWeeks : tab === 'survey' ? cfg.surveyWeeks : cfg.publicMonths;
+  if(selectedKeys.length === 1) {
+    const w = items.find(w => w.key === selectedKeys[0]);
+    labelEl.textContent = w ? w.label : selectedKeys[0];
+  } else {
+    const labels = selectedKeys.map(k => {
+      const w = items.find(w => w.key === k);
+      return w ? w.label.split('（')[0].trim() : k;
+    });
+    labelEl.textContent = labels.join(' + ');
+  }
+}
+
+// ==================== 初始化下拉选择器 ====================
+function initAllSelectors() {
+  const cfg = window.REPORT_CONFIG;
+  if(!cfg) { console.error('data_config.js 未加载'); return; }
+
+  // 公开评论月份（多选）
+  const pubOptionsEl = document.getElementById('pub-month-options');
+  pubOptionsEl.innerHTML = cfg.publicMonths.map(m=>`
+    <div class="multi-week-option">
+      <input type="checkbox" id="pub-month-cb-${m.key}" value="${m.key}" onchange="onPubMonthCheckChange()">
+      <label for="pub-month-cb-${m.key}">${m.label}</label>
+    </div>
+  `).join('');
+  // 默认选最新一个月份
+  const lastPubMonth = cfg.publicMonths[cfg.publicMonths.length - 1];
+  document.getElementById(`pub-month-cb-${lastPubMonth.key}`).checked = true;
+  selectedPubMonths = [lastPubMonth.key];
+  updateMultiWeekLabel('pub', selectedPubMonths);
+
+  // 差评工单周次（多选）
+  const compOptionsEl = document.getElementById('comp-week-options');
+  compOptionsEl.innerHTML = cfg.complaintWeeks.map(w=>`
+    <div class="multi-week-option">
+      <input type="checkbox" id="comp-week-cb-${w.key}" value="${w.key}" onchange="onCompWeekCheckChange()">
+      <label for="comp-week-cb-${w.key}">${w.label}</label>
+    </div>
+  `).join('');
+  // 默认选最新一周
+  const lastCompWeek = cfg.complaintWeeks[cfg.complaintWeeks.length - 1];
+  document.getElementById(`comp-week-cb-${lastCompWeek.key}`).checked = true;
+  selectedCompWeeks = [lastCompWeek.key];
+  updateMultiWeekLabel('comp', selectedCompWeeks);
+
+  // 满意度问卷周次（多选）
+  const surveyOptionsEl = document.getElementById('survey-week-options');
+  surveyOptionsEl.innerHTML = cfg.surveyWeeks.map(w=>`
+    <div class="multi-week-option">
+      <input type="checkbox" id="survey-week-cb-${w.key}" value="${w.key}" onchange="onSurveyWeekCheckChange()">
+      <label for="survey-week-cb-${w.key}">${w.label}</label>
+    </div>
+  `).join('');
+  const lastSurveyWeek = cfg.surveyWeeks[cfg.surveyWeeks.length - 1];
+  document.getElementById(`survey-week-cb-${lastSurveyWeek.key}`).checked = true;
+  selectedSurveyWeeks = [lastSurveyWeek.key];
+  updateMultiWeekLabel('survey', selectedSurveyWeeks);
+
+  // 触发初始加载
+  onPubMonthsChange();
+  onCompWeeksChange();
+  // 预填 loadedScripts 缓存（静态加载的文件不会触发 onload，需手动标记）
+  cfg.surveyWeeks.forEach(w => {
+    if(window[w.key] !== undefined) loadedScripts[w.file] = true;
+  });
+  cfg.complaintWeeks.forEach(w => {
+    if(window[w.key] !== undefined) loadedScripts[w.file] = true;
+  });
+  cfg.publicMonths.forEach(m => {
+    if(window[m.key] !== undefined) loadedScripts[m.file] = true;
+  });
+  onSurveyWeeksChange();
+}
+
+// 实时更新标签（不触发数据加载）
+function onPubMonthCheckChange() {
+  const keys = [...document.querySelectorAll('#pub-month-options input[type=checkbox]:checked')].map(cb => cb.value);
+  updateMultiWeekLabel('pub', keys);
+}
+function onCompWeekCheckChange() {
+  const keys = [...document.querySelectorAll('#comp-week-options input[type=checkbox]:checked')].map(cb => cb.value);
+  updateMultiWeekLabel('comp', keys);
+}
+function onSurveyWeekCheckChange() {
+  const keys = [...document.querySelectorAll('#survey-week-options input[type=checkbox]:checked')].map(cb => cb.value);
+  updateMultiWeekLabel('survey', keys);
+}
+
+function onPubMonthsChange() {
+  const cfg = window.REPORT_CONFIG;
+  const keys = selectedPubMonths;
+  updateMultiWeekLabel('pub', keys);
+  
+  const months = cfg.publicMonths.filter(m => keys.includes(m.key));
+  const totalCount = months.reduce((sum, m) => sum + (parseInt(m.count)||0), 0);
+  const ranges = months.map(m => m.dateRange);
+  const rangeStr = ranges.length === 1 ? ranges[0] : `${ranges[0].split(' ~ ')[0]} ~ ${ranges[ranges.length-1].split(' ~ ')[1]}`;
+  document.getElementById('pub-period-info').textContent = `${rangeStr} · ${totalCount}条（${keys.length}个月份）`;
+  document.getElementById('pub-table-wrap').innerHTML = '<div class="loading-overlay">⏳ 加载数据中…</div>';
+  
+  const files = months.map(m => m.file);
+  loadMultipleDataScripts(files, () => {
+    let merged = [];
+    keys.forEach(key => {
+      const raw = JSON.parse(JSON.stringify(window[key] || []));
+      const withEdits = applyPubEdits(raw, key);
+      merged = merged.concat(withEdits);
+    });
+    pubData = merged;
+    currentPubKey = keys.join('_');
+    pubPage = 1;
+    initPubFilters();
+    renderPubCharts();
+    renderPubTable();
+    loadChartNotes('public', currentPubKey);
+  });
+}
+// 兼容旧版单选函数
+function onPubMonthChange() { onPubMonthsChange(); }
+
+function onCompWeeksChange() {
+  const cfg = window.REPORT_CONFIG;
+  const keys = selectedCompWeeks;
+  updateMultiWeekLabel('comp', keys);
+  
+  // 计算合并后的日期范围和总条数
+  const weeks = cfg.complaintWeeks.filter(w => keys.includes(w.key));
+  const totalCount = weeks.reduce((sum, w) => sum + (parseInt(w.count)||0), 0);
+  const ranges = weeks.map(w => w.dateRange);
+  const rangeStr = ranges.length === 1 ? ranges[0] : `${ranges[0].split(' ~ ')[0]} ~ ${ranges[ranges.length-1].split(' ~ ')[1]}`;
+  document.getElementById('comp-period-info').textContent = `${rangeStr} · ${totalCount}条（${keys.length}周）`;
+  document.getElementById('comp-notice').innerHTML = `📌 数据来源：Bambu Lab 差评工单（${rangeStr}）。问题类型由 GPT 语义匹配初始标注，标注 <span style="background:#FEF9C3;padding:1px 5px;border-radius:3px;color:#92400E">待确认</span> 的条目可在下方表格中手动编辑并保存。`;
+  document.getElementById('comp-table-wrap').innerHTML = '<div class="loading-overlay">⏳ 加载数据中…</div>';
+  
+  // 加载所有选中周次的数据文件
+  const files = weeks.map(w => w.file);
+  loadMultipleDataScripts(files, () => {
+    // 合并所有周次数据
+    let merged = [];
+    keys.forEach(key => {
+      const raw = JSON.parse(JSON.stringify(window[key] || []));
+      const withEdits = applyCompEdits(raw, key);
+      merged = merged.concat(withEdits);
+    });
+    compData = merged;
+    compPage = 1;
+    initCompFilters();
+    renderCompCharts();
+    renderCompTable();
+    // 图表说明用合并key
+    loadChartNotes('complaint', keys.join('_'));
+  });
+}
+
+function onSurveyWeeksChange() {
+  const cfg = window.REPORT_CONFIG;
+  const keys = selectedSurveyWeeks;
+  updateMultiWeekLabel('survey', keys);
+  
+  const weeks = cfg.surveyWeeks.filter(w => keys.includes(w.key));
+  const totalCount = weeks.reduce((sum, w) => sum + (parseInt(w.count)||0), 0);
+  const ranges = weeks.map(w => w.dateRange);
+  const rangeStr = ranges.length === 1 ? ranges[0] : `${ranges[0].split(' ~ ')[0]} ~ ${ranges[ranges.length-1].split(' ~ ')[1]}`;
+  document.getElementById('survey-period-info').textContent = `${rangeStr} · ${totalCount}条（${keys.length}周）`;
+  document.getElementById('survey-table-wrap').innerHTML = '<div class="loading-overlay">⏳ 加载数据中…</div>';
+  
+  const files = weeks.map(w => w.file);
+  loadMultipleDataScripts(files, () => {
+    let merged = [];
+    keys.forEach(key => {
+      const raw = JSON.parse(JSON.stringify(window[key] || []));
+      merged = merged.concat(raw);
+    });
+    surveyData = merged;
+    surveyTablePage = 1;
+    initSurveyFilters();
+    renderSurveyCharts();
+    renderSurveyTable();
+    loadChartNotes('survey', keys.join('_'));
+  });
+}
+
+// ==================== 公开评论编辑记录 ====================
+function getPubEditsKey(monthKey) { return `bambu_pub_edits_${monthKey}`; }
+function getPubCatKey(monthKey) { return `bambu_pub_cat_${monthKey}`; }
+function applyPubEdits(data, monthKey) {
+  try {
+    const edits = JSON.parse(localStorage.getItem(getPubEditsKey(monthKey))||'{}');
+    const catEdits = JSON.parse(localStorage.getItem(getPubCatKey(monthKey))||'{}');
+    return data.map(d => {
+      const safeId = String(d.id);
+      const e = edits[safeId];
+      const c = catEdits[safeId];
+      if(e) { d.issue_types = e.labels; d.issue_types_editable = true; }
+      if(c) { d.category = c; d.category_editable = true; }
+      return d;
+    });
+  } catch(err) { return data; }
+}
+function savePubEdit(id, monthKey, labels, categoryOverride) {
+  const editsKey = getPubEditsKey(monthKey);
+  const catKey = getPubCatKey(monthKey);
+  const edits = JSON.parse(localStorage.getItem(editsKey)||'{}');
+  const catEdits = JSON.parse(localStorage.getItem(catKey)||'{}');
+  const safeId = String(id);
+  if(labels !== null) edits[safeId] = { labels };
+  if(categoryOverride !== null) catEdits[safeId] = categoryOverride;
+  localStorage.setItem(editsKey, JSON.stringify(edits));
+  localStorage.setItem(catKey, JSON.stringify(catEdits));
+}
+
+// ==================== 差评工单编辑记录（按周次分key） ====================
+function getCompEditsKey(weekKey) { return `bambu_comp_edits_${weekKey}`; }
+function getCompCatKey(weekKey) { return `bambu_comp_cat_${weekKey}`; }
+function applyCompEdits(data, weekKey) {
+  try {
+    const edits = JSON.parse(localStorage.getItem(getCompEditsKey(weekKey))||'{}');
+    const catEdits = JSON.parse(localStorage.getItem(getCompCatKey(weekKey))||'{}');
+    return data.map(d => {
+      const safeId = String(d.id);
+      const e = edits[safeId];
+      const c = catEdits[safeId];
+      if(e) { d.issue_types = e.labels; d.issue_types_editable = true; }
+      if(c) { d.category = c; }
+      return d;
+    });
+  } catch(err) { return data; }
+}
+function saveCompEdit(id, weekKey, labels, categoryOverride) {
+  const editsKey = getCompEditsKey(weekKey);
+  const catKey = getCompCatKey(weekKey);
+  const edits = JSON.parse(localStorage.getItem(editsKey)||'{}');
+  const catEdits = JSON.parse(localStorage.getItem(catKey)||'{}');
+  const safeId = String(id);
+  edits[safeId] = { labels };
+  if(categoryOverride) catEdits[safeId] = categoryOverride;
+  localStorage.setItem(editsKey, JSON.stringify(edits));
+  localStorage.setItem(catKey, JSON.stringify(catEdits));
+}
+
+// ==================== 图表工具 ====================
+function destroyChart(charts, key) {
+  if(charts[key]) { charts[key].destroy(); delete charts[key]; }
+}
+function destroySurveyChart(id) {
+  if(surveyChartInstances[id]) { surveyChartInstances[id].destroy(); delete surveyChartInstances[id]; }
+}
+function makeDonut(id, labels, data, colors) {
+  destroyChart(pubCharts, id); destroyChart(compCharts, id);
+  const ctx = document.getElementById(id);
+  if(!ctx) return;
+  pubCharts[id] = compCharts[id] = new Chart(ctx, {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data, backgroundColor:colors||COLORS, borderWidth:2, borderColor:'#fff' }] },
+    options:{ responsive:true, plugins:{ legend:{ position:'bottom', labels:{ font:{ size:11 }, padding:8 } } } }
+  });
+}
+function makeBar(id, labels, datasets, opts={}) {
+  destroyChart(pubCharts, id); destroyChart(compCharts, id);
+  const ctx = document.getElementById(id);
+  if(!ctx) return;
+  pubCharts[id] = compCharts[id] = new Chart(ctx, {
+    type:'bar',
+    data:{ labels, datasets },
+    options:{
+      indexAxis: opts.horizontal ? 'y' : 'x',
+      responsive:true,
+      plugins:{ legend:{ display: opts.legend!==false, position:'bottom', labels:{ font:{ size:11 }, padding:6 } } },
+      scales:{
+        x:{ stacked:!!opts.stacked, max:opts.yMax||undefined, ticks:{ font:{ size:11 } } },
+        y:{ stacked:!!opts.stacked, ticks:{ font:{ size:11 } } }
+      }
+    }
+  });
+}
+function makeLine(id, labels, datasets) {
+  destroyChart(pubCharts, id); destroyChart(compCharts, id);
+  const ctx = document.getElementById(id);
+  if(!ctx) return;
+  pubCharts[id] = compCharts[id] = new Chart(ctx, {
+    type:'line',
+    data:{ labels, datasets },
+    options:{ responsive:true, plugins:{ legend:{ display:false } }, scales:{ y:{ ticks:{ font:{ size:11 } } } } }
+  });
+}
+function setAutoNote(noteId, bullets) {
+  const el = document.getElementById('auto-note-' + noteId);
+  if(!el) return;
+  el.innerHTML = bullets.map(b=>`<li>${b}</li>`).join('');
+}
+
+// ==================== 公开评论图表 ====================
+function renderPubCharts() {
+  const data = pubData;
+  if(!data.length) return;
+  const sentMap = {};
+  data.forEach(d=>{
+    let s = d.sentiment||'';
+    if(s==='negative') s='负面';
+    else if(s==='positive') s='正面';
+    else if(s==='neutral') s='中性';
+    sentMap[s]=(sentMap[s]||0)+1;
+  });
+  makeDonut('p-chartSentiment', Object.keys(sentMap), Object.values(sentMap), ['#EF4444','#22C55E','#94A3B8','#60A5FA']);
+  const platMap = {}; data.forEach(d=>{ platMap[d.platform]=(platMap[d.platform]||0)+1; });
+  makeBar('p-chartPlatform', Object.keys(platMap), [{data:Object.values(platMap), backgroundColor:COLORS, borderRadius:4}], {legend:false});
+  const catMap = {}; data.forEach(d=>{ catMap[d.category]=(catMap[d.category]||0)+1; });
+  const catSorted = Object.entries(catMap).sort((a,b)=>b[1]-a[1]);
+  makeBar('p-chartCategory', catSorted.map(x=>x[0]), [{data:catSorted.map(x=>x[1]), backgroundColor:COLORS, borderRadius:4}], {horizontal:true, legend:false});
+
+  // 问题类型三饼图
+  const issueMap = {}; data.forEach(d=>{ (d.issue_types||[]).forEach(t=>{ issueMap[t]=(issueMap[t]||0)+1; }); });
+  const issueSorted = Object.entries(issueMap).sort((a,b)=>b[1]-a[1]);
+  // 全部问题类型饼图
+  const allIssueEntries = issueSorted.filter(x=>x[0]&&x[0]!=='待确认');
+  if(allIssueEntries.length) makeDonut('p-chartIssuePieAll', allIssueEntries.map(x=>x[0]), allIssueEntries.map(x=>x[1]));
+  // 物流相关饼图
+  const logEntries = issueSorted.filter(x=>LOGISTICS_TYPES.has(x[0]));
+  if(logEntries.length) makeDonut('p-chartIssuePieLog', logEntries.map(x=>x[0]), logEntries.map(x=>x[1]));
+  else { const c = document.getElementById('p-chartIssuePieLog'); if(c){ const ctx=c.getContext('2d'); ctx.font='13px sans-serif'; ctx.fillStyle='#94A3B8'; ctx.textAlign='center'; ctx.fillText('暂无物流相关标签', c.width/2, c.height/2); } }
+  // 客服相关饼图
+  const svcEntries = issueSorted.filter(x=>SERVICE_TYPES.has(x[0]));
+  if(svcEntries.length) makeDonut('p-chartIssuePieSvc', svcEntries.map(x=>x[0]), svcEntries.map(x=>x[1]));
+  else { const c = document.getElementById('p-chartIssuePieSvc'); if(c){ const ctx=c.getContext('2d'); ctx.font='13px sans-serif'; ctx.fillStyle='#94A3B8'; ctx.textAlign='center'; ctx.fillText('暂无客服相关标签', c.width/2, c.height/2); } }
+  const countryMap = {}; data.forEach(d=>{ countryMap[d.country]=(countryMap[d.country]||0)+1; });
+  makeDonut('p-chartCountry', Object.keys(countryMap), Object.values(countryMap));
+  const countries = [...new Set(data.map(d=>d.country))];
+  const cats = [...new Set(data.map(d=>d.category))];
+  const ccDatasets = cats.map((cat,i)=>({
+    label:cat, backgroundColor:COLORS[i%COLORS.length],
+    data:countries.map(c=>data.filter(d=>d.country===c&&d.category===cat).length)
+  }));
+  makeBar('p-chartCountryCat', countries, ccDatasets, {stacked:true, legend:true});
+  const sents = ['负面','正面','中性','中性/正面'];
+  const sentColors = ['#EF4444','#22C55E','#94A3B8','#60A5FA'];
+  const catsAll = [...new Set(data.map(d=>d.category))];
+  const csDatasets = sents.map((s,i)=>({
+    label:s, backgroundColor:sentColors[i],
+    data:catsAll.map(c=>data.filter(d=>d.category===c&&(d.sentiment===s||(s==='负面'&&d.sentiment==='negative')||(s==='正面'&&d.sentiment==='positive')||(s==='中性'&&d.sentiment==='neutral'))).length)
+  }));
+  makeBar('p-chartCatSentiment', catsAll, csDatasets, {stacked:true, legend:true});
+  const neg = data.filter(d=>d.sentiment==='负面'||d.sentiment==='negative').length;
+  const pos = data.filter(d=>d.sentiment==='正面'||d.sentiment==='positive'||d.sentiment==='中性/正面').length;
+  const log = data.filter(d=>d.category&&d.category.includes('物流')).length;
+  const svc = data.filter(d=>d.category&&d.category.includes('客服')).length;
+  const countries_known = new Set(data.filter(d=>d.country&&d.country!=='Unknown'&&d.country!=='—').map(d=>d.country));
+  document.getElementById('pub-stats').innerHTML = `
+    <div class="stat-card neg"><div class="num">${neg}</div><div class="label">负面评论</div></div>
+    <div class="stat-card pos"><div class="num">${pos}</div><div class="label">正面评论</div></div>
+    <div class="stat-card"><div class="num">${data.length-neg-pos}</div><div class="label">中性评论</div></div>
+    <div class="stat-card"><div class="num">${log}</div><div class="label">物流相关</div></div>
+    <div class="stat-card"><div class="num">${svc}</div><div class="label">客服相关</div></div>
+    <div class="stat-card warn"><div class="num">${countries_known.size}</div><div class="label">已知国家/地区</div></div>
+  `;
+  const topSent = Object.entries(sentMap).sort((a,b)=>b[1]-a[1])[0];
+  setAutoNote('p-chartSentiment', [
+    `共${data.length}条评论，情感以「${topSent?topSent[0]:'-'}」为主（${topSent?topSent[1]:0}条）`,
+    `负面${neg}条（${(neg/data.length*100).toFixed(1)}%），正面${pos}条（${(pos/data.length*100).toFixed(1)}%）`,
+    neg > pos ? '⚠️ 负面评论占比较高，需关注用户痛点' : '正面评论占比较高，整体口碑良好'
+  ]);
+  const topPlat = Object.entries(platMap).sort((a,b)=>b[1]-a[1])[0];
+  setAutoNote('p-chartPlatform', [
+    `主要来源平台：${topPlat?topPlat[0]:'-'}（${topPlat?topPlat[1]:0}条）`,
+    `共覆盖${Object.keys(platMap).length}个平台`,
+    '不同平台用户群体和话题侧重可能存在差异'
+  ]);
+  const topCat = catSorted[0];
+  setAutoNote('p-chartCategory', [
+    `最高频话题：「${topCat?topCat[0]:'-'}」（${topCat?topCat[1]:0}条）`,
+    `共${catSorted.length}个话题类别`,
+    '话题分布反映用户最关注的产品/服务维度'
+  ]);
+
+  const topIssue = allIssueEntries[0];
+  setAutoNote('p-chartIssuePieAll', [
+    `共${allIssueEntries.length}种问题类型，最高频：「${topIssue?topIssue[0]:'-'}」（${topIssue?topIssue[1]:0}次）`,
+    '饼图占比可直观展示各问题类型的相对重要性'
+  ]);
+  setAutoNote('p-chartIssuePieLog', [
+    `物流相关问题共${logEntries.length}种，总频次${logEntries.reduce((s,x)=>s+x[1],0)}次`,
+    '反映用户在物流配送环节的主要痛点'
+  ]);
+  setAutoNote('p-chartIssuePieSvc', [
+    `客服相关问题共${svcEntries.length}种，总频次${svcEntries.reduce((s,x)=>s+x[1],0)}次`,
+    '反映用户在客服服务环节的主要痛点'
+  ]);
+}
+
+// ==================== 差评工单图表 ====================
+function renderCompCharts() {
+  const data = compData;
+  if(!data.length) return;
+  const catMap = {}; data.forEach(d=>{ catMap[d.category]=(catMap[d.category]||0)+1; });
+  const catSorted = Object.entries(catMap).sort((a,b)=>b[1]-a[1]);
+  makeBar('c-chartCategory', catSorted.map(x=>x[0]), [{data:catSorted.map(x=>x[1]), backgroundColor:COLORS, borderRadius:4}], {horizontal:true, legend:false});
+  const regMap = {}; data.forEach(d=>{ if(d.region) regMap[d.region]=(regMap[d.region]||0)+1; });
+  makeDonut('c-chartRegion', Object.keys(regMap), Object.values(regMap));
+  const regions = [...new Set(data.map(d=>d.region).filter(r=>r))];
+  const cats = [...new Set(data.map(d=>d.category).filter(c=>c))];
+  const rcDatasets = cats.map((cat,i)=>({
+    label:cat, backgroundColor:COLORS[i%COLORS.length],
+    data:regions.map(r=>data.filter(d=>d.region===r&&d.category===cat).length)
+  }));
+  makeBar('c-chartRegionCat', regions, rcDatasets, {stacked:true, legend:true});
+  const issueMap = {}; data.forEach(d=>{ (d.issue_types||[]).forEach(t=>{ issueMap[t]=(issueMap[t]||0)+1; }); });
+  const issueSorted = Object.entries(issueMap).sort((a,b)=>b[1]-a[1]);
+  // 问题类型三饼图
+  const cAllIssueEntries = issueSorted.filter(x=>x[0]&&x[0]!=='待确认');
+  if(cAllIssueEntries.length) makeDonut('c-chartIssuePieAll', cAllIssueEntries.map(x=>x[0]), cAllIssueEntries.map(x=>x[1]));
+  const cLogEntries = issueSorted.filter(x=>LOGISTICS_TYPES.has(x[0]));
+  if(cLogEntries.length) makeDonut('c-chartIssuePieLog', cLogEntries.map(x=>x[0]), cLogEntries.map(x=>x[1]));
+  else { const c = document.getElementById('c-chartIssuePieLog'); if(c){ const ctx=c.getContext('2d'); ctx.font='13px sans-serif'; ctx.fillStyle='#94A3B8'; ctx.textAlign='center'; ctx.fillText('暂无物流相关标签', c.width/2, c.height/2); } }
+  const cSvcEntries = issueSorted.filter(x=>SERVICE_TYPES.has(x[0]));
+  if(cSvcEntries.length) makeDonut('c-chartIssuePieSvc', cSvcEntries.map(x=>x[0]), cSvcEntries.map(x=>x[1]));
+  else { const c = document.getElementById('c-chartIssuePieSvc'); if(c){ const ctx=c.getContext('2d'); ctx.font='13px sans-serif'; ctx.fillStyle='#94A3B8'; ctx.textAlign='center'; ctx.fillText('暂无客服相关标签', c.width/2, c.height/2); } }
+  const regIssueCount = {};
+  regions.forEach(r=>{
+    regIssueCount[r] = {};
+    data.filter(d=>d.region===r).forEach(d=>{(d.issue_types||[]).forEach(t=>{ regIssueCount[r][t]=(regIssueCount[r][t]||0)+1; });});
+  });
+  const regTotals = {};
+  regions.forEach(r=>{ regTotals[r] = Object.values(regIssueCount[r]).reduce((a,b)=>a+b,0)||1; });
+  const topIssues = Object.entries(issueMap).filter(([k])=>k!=='待确认').sort((a,b)=>b[1]-a[1]).slice(0,12).map(x=>x[0]);
+  const pctDatasets = topIssues.map((issue,i)=>({
+    label:issue, backgroundColor:COLORS[i%COLORS.length],
+    data:regions.map(r=>Math.round((regIssueCount[r][issue]||0)/regTotals[r]*100))
+  }));
+  makeBar('c-chartCountryPct', regions, pctDatasets, {stacked:true, legend:true, yMax:100});
+  const logPct = regions.map(r=>{
+    const total = data.filter(d=>d.region===r).length||1;
+    const cnt = data.filter(d=>d.region===r&&(d.issue_types||[]).some(t=>LOGISTICS_TYPES.has(t))).length;
+    return Math.round(cnt/total*100);
+  });
+  makeBar('c-chartLogPct', regions, [{label:'物流相关占比%', data:logPct, backgroundColor:'#3B82F6', borderRadius:4}], {legend:false});
+  const svcPct = regions.map(r=>{
+    const total = data.filter(d=>d.region===r).length||1;
+    const cnt = data.filter(d=>d.region===r&&(d.issue_types||[]).some(t=>SERVICE_TYPES.has(t))).length;
+    return Math.round(cnt/total*100);
+  });
+  makeBar('c-chartSvcPct', regions, [{label:'客服相关占比%', data:svcPct, backgroundColor:'#8B5CF6', borderRadius:4}], {legend:false});
+  const logCnt = data.filter(d=>(d.issue_types||[]).some(t=>LOGISTICS_TYPES.has(t))).length;
+  const svcCnt = data.filter(d=>(d.issue_types||[]).some(t=>SERVICE_TYPES.has(t))).length;
+  const mixCnt = data.filter(d=>(d.issue_types||[]).some(t=>LOGISTICS_TYPES.has(t))&&(d.issue_types||[]).some(t=>SERVICE_TYPES.has(t))).length;
+  const pendingCnt = data.filter(d=>(d.issue_types||[]).includes('待确认')).length;
+  document.getElementById('comp-stats').innerHTML = `
+    <div class="stat-card"><div class="num">${data.length}</div><div class="label">总条数</div></div>
+    <div class="stat-card"><div class="num">${logCnt}</div><div class="label">物流相关</div></div>
+    <div class="stat-card"><div class="num">${svcCnt}</div><div class="label">客服相关</div></div>
+    <div class="stat-card"><div class="num">${mixCnt}</div><div class="label">物流+客服</div></div>
+    <div class="stat-card warn"><div class="num">${pendingCnt}</div><div class="label">待确认</div></div>
+    <div class="stat-card"><div class="num">${new Set(data.map(d=>d.region).filter(r=>r)).size}</div><div class="label">地区数</div></div>
+  `;
+  const topCat = catSorted[0];
+  setAutoNote('c-chartCategory', [
+    `最高频类别：「${topCat?topCat[0]:'-'}」（${topCat?topCat[1]:0}条）`,
+    `共${catSorted.length}个问题类别，物流相关${logCnt}条，客服相关${svcCnt}条`,
+    pendingCnt > 0 ? `⚠️ 有${pendingCnt}条待确认，建议在下方表格中手动核对` : '所有条目已完成分类标注'
+  ]);
+  const topReg = Object.entries(regMap).sort((a,b)=>b[1]-a[1])[0];
+  setAutoNote('c-chartRegion', [
+    `最高频地区：${topReg?topReg[0]:'-'}（${topReg?topReg[1]:0}条）`,
+    `共${Object.keys(regMap).length}个地区有差评工单`,
+    '地区分布可辅助判断是否存在区域性服务问题'
+  ]);
+  setAutoNote('c-chartRegionCat', [
+    `各地区问题类别分布差异可反映区域性服务短板`,
+    `重点关注工单量大且物流/客服类别占比高的地区`,
+    '建议结合地区特点制定差异化改善策略'
+  ]);
+  const topIssue = cAllIssueEntries[0];
+  setAutoNote('c-chartIssuePieAll', [
+    `共${cAllIssueEntries.length}种问题类型，最高频：「${topIssue?topIssue[0]:'-'}」（${topIssue?topIssue[1]:0}次）`,
+    '饼图占比可直观展示各问题类型的相对重要性'
+  ]);
+  setAutoNote('c-chartIssuePieLog', [
+    `物流相关问题共${cLogEntries.length}种，总频次${cLogEntries.reduce((s,x)=>s+x[1],0)}次`,
+    '反映用户在物流配送环节的主要痛点'
+  ]);
+  setAutoNote('c-chartIssuePieSvc', [
+    `客服相关问题共${cSvcEntries.length}种，总频次${cSvcEntries.reduce((s,x)=>s+x[1],0)}次`,
+    '反映用户在客服服务环节的主要痛点'
+  ]);
+}
+
+// ==================== 满意度问卷图表 ====================
+function renderSurveyCharts() {
+  const data = surveyData;
+  if(!data.length) return;
+  const total = data.length;
+  const sats = data.map(d=>d.satisfaction).filter(s=>s!=null);
+  const satMean = sats.length ? (sats.reduce((a,b)=>a+b,0)/sats.length).toFixed(2) : '-';
+  const fiveStar = sats.filter(s=>s===5).length;
+  const oneStar  = sats.filter(s=>s===1).length;
+  const resolved = data.filter(d=>d.resolved===true).length;
+  const npss = data.map(d=>d.nps).filter(n=>n!=null);
+  const npsMean = npss.length ? (npss.reduce((a,b)=>a+b,0)/npss.length).toFixed(2) : '-';
+  document.getElementById('survey-stats-grid').innerHTML = `
+    <div class="stat-card"><div class="stat-value" style="color:#3B82F6">${total}</div><div class="stat-label">总条数</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:#10B981">${satMean}</div><div class="stat-label">满意度均分</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:#3B82F6">${sats.length?(fiveStar/sats.length*100).toFixed(1)+'%':'-'}</div><div class="stat-label">5星率</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:#EF4444">${sats.length?(oneStar/sats.length*100).toFixed(1)+'%':'-'}</div><div class="stat-label">1星率</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:#10B981">${(resolved/total*100).toFixed(1)}%</div><div class="stat-label">解决率</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:#8B5CF6">${npsMean}</div><div class="stat-label">推荐度均分</div></div>
+  `;
+  destroySurveyChart('s-chartSatTrend');
+  const dateMap = {};
+  data.forEach(d=>{ if(d.date){ if(!dateMap[d.date]) dateMap[d.date]=[]; const s=d.satisfaction; if(s!=null) dateMap[d.date].push(s); }});
+  const dates = Object.keys(dateMap).sort();
+  const satByDate = dates.map(dt=>{ const arr=dateMap[dt]; return arr.length?(arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(2):null; });
+  surveyChartInstances['s-chartSatTrend'] = new Chart(document.getElementById('s-chartSatTrend'), {
+    type:'line',
+    data:{ labels:dates, datasets:[{
+      label:'满意度均分', data:satByDate,
+      borderColor:'#3B82F6', backgroundColor:'rgba(59,130,246,0.1)',
+      pointBackgroundColor: dates.map((_,i)=>satByDate[i]<3.9?'#EF4444':'#3B82F6'),
+      pointRadius:5, tension:0.3, fill:true
+    }]},
+    options:{ responsive:true, plugins:{legend:{display:false}}, scales:{ y:{ min:1, max:5, ticks:{stepSize:1} } } }
+  });
+  destroySurveyChart('s-chartSatDist');
+  const distDatasets = [1,2,3,4,5].map(score => ({
+    label: `${score}★`,
+    data: dates.map(dt => {
+      const ds = data.filter(d=>d.date===dt && d.satisfaction!=null);
+      return ds.length ? +(ds.filter(d=>d.satisfaction===score).length/ds.length*100).toFixed(1) : 0;
+    }),
+    backgroundColor: SAT_COLORS[score],
+  }));
+  surveyChartInstances['s-chartSatDist'] = new Chart(document.getElementById('s-chartSatDist'), {
+    type:'bar',
+    data:{ labels:dates, datasets:distDatasets },
+    options:{ responsive:true, plugins:{legend:{position:'bottom'}},
+      scales:{ x:{stacked:true}, y:{stacked:true, max:100, ticks:{callback:v=>v+'%'}} } }
+  });
+  destroySurveyChart('s-chartNpsTrend');
+  const npsByDate = dates.map(dt => {
+    const wn = data.filter(d=>d.date===dt).map(d=>d.nps).filter(n=>n!=null);
+    return wn.length ? +(wn.reduce((a,b)=>a+b,0)/wn.length).toFixed(2) : null;
+  });
+  surveyChartInstances['s-chartNpsTrend'] = new Chart(document.getElementById('s-chartNpsTrend'), {
+    type:'line',
+    data:{ labels:dates, datasets:[{
+      label:'推荐度均分', data:npsByDate,
+      borderColor:'#8B5CF6', backgroundColor:'rgba(139,92,246,0.1)',
+      pointBackgroundColor:'#8B5CF6', pointRadius:5, tension:0.3, fill:true
+    }]},
+    options:{ responsive:true, plugins:{legend:{display:false}}, scales:{ y:{ min:1, max:5, ticks:{stepSize:1} } } }
+  });
+  destroySurveyChart('s-chartResolved');
+  const resolvedByDate = dates.map(dt => {
+    const wd = data.filter(d=>d.date===dt);
+    const res = wd.filter(d=>d.resolved===true).length;
+    return wd.length ? +(res/wd.length*100).toFixed(1) : 0;
+  });
+  surveyChartInstances['s-chartResolved'] = new Chart(document.getElementById('s-chartResolved'), {
+    type:'bar',
+    data:{ labels:dates, datasets:[
+      { type:'bar', label:'解决率(%)', data:resolvedByDate, backgroundColor:'rgba(16,185,129,0.7)', yAxisID:'y' },
+      { type:'line', label:'满意度均分', data:satByDate, borderColor:'#F59E0B', backgroundColor:'transparent',
+        pointBackgroundColor:'#F59E0B', pointRadius:4, tension:0.3, yAxisID:'y2' }
+    ]},
+    options:{ responsive:true, plugins:{legend:{position:'bottom'}},
+      scales:{
+        y:{ min:0, max:100, ticks:{callback:v=>v+'%'}, position:'left' },
+        y2:{ min:1, max:5, position:'right', grid:{drawOnChartArea:false} }
+      }
+    }
+  });
+  destroySurveyChart('s-chartRegion');
+  const regions = [...new Set(data.map(d=>d.region).filter(r=>r))].sort();
+  const regionMeans = regions.map(r => {
+    const rs = data.filter(d=>d.region===r).map(d=>d.satisfaction).filter(s=>s!=null);
+    return rs.length ? +(rs.reduce((a,b)=>a+b,0)/rs.length).toFixed(2) : null;
+  });
+  surveyChartInstances['s-chartRegion'] = new Chart(document.getElementById('s-chartRegion'), {
+    type:'bar',
+    data:{ labels:regions, datasets:[{
+      label:'满意度均分', data:regionMeans,
+      backgroundColor:regions.map((_,i)=>COLORS[i%COLORS.length]),
+    }]},
+    options:{ responsive:true, plugins:{legend:{display:false}}, scales:{ y:{ min:1, max:5, ticks:{stepSize:0.5} } } }
+  });
+  destroySurveyChart('s-chartAgent');
+  const agentMap = {};
+  data.forEach(d => {
+    const a = d.agent; if(!a) return;
+    if(!agentMap[a]) agentMap[a] = {satSum:0, satN:0, npsSum:0, npsN:0, resolved:0, total:0};
+    agentMap[a].total++;
+    if(d.satisfaction!=null){ agentMap[a].satSum+=d.satisfaction; agentMap[a].satN++; }
+    if(d.nps!=null){ agentMap[a].npsSum+=d.nps; agentMap[a].npsN++; }
+    if(d.resolved===true) agentMap[a].resolved++;
+  });
+  const agentEntries = Object.entries(agentMap)
+    .map(([name,v])=>({name, satMean:v.satN?(v.satSum/v.satN):0, npsMean:v.npsN?(v.npsSum/v.npsN):0, resolvedRate:v.total?(v.resolved/v.total*100):0, total:v.total}))
+    .sort((a,b)=>b.satMean-a.satMean);
+  const agentLabels = agentEntries.map(e=>`${e.name}(${e.total})`);
+  surveyChartInstances['s-chartAgent'] = new Chart(document.getElementById('s-chartAgent'), {
+    type:'bar',
+    data:{ labels:agentLabels, datasets:[
+      { label:'满意度均分', data:agentEntries.map(e=>+e.satMean.toFixed(2)), backgroundColor:'rgba(59,130,246,0.7)' },
+      { label:'推荐度均分', data:agentEntries.map(e=>+e.npsMean.toFixed(2)), backgroundColor:'rgba(139,92,246,0.5)' },
+    ]},
+    options:{ indexAxis:'y', responsive:true, plugins:{legend:{position:'bottom'}},
+      scales:{ x:{ min:1, max:5 }, y:{ ticks:{font:{size:11}} } } }
+  });
+  const satMin = Math.min(...satByDate.filter(v=>v!=null).map(Number));
+  const satMax = Math.max(...satByDate.filter(v=>v!=null).map(Number));
+  const satMinDate = dates[satByDate.map(Number).indexOf(satMin)];
+  const satMaxDate = dates[satByDate.map(Number).indexOf(satMax)];
+  setAutoNote('s-chartSatTrend', [
+    `整体满意度均分 ${satMean}（满分5分）`,
+    `${satMaxDate} 均分最高（${satMax}），${satMinDate} 均分最低（${satMin}）`,
+    satMin < 3.5 ? `⚠️ ${satMinDate} 均分低于3.5，需重点关注该日服务质量` : `各日均分波动幅度 ${(satMax-satMin).toFixed(2)} 分，整体较稳定`
+  ]);
+  const star1Rate = sats.filter(s=>s===1).length / (sats.length||1) * 100;
+  const star5Rate = sats.filter(s=>s===5).length / (sats.length||1) * 100;
+  setAutoNote('s-chartSatDist', [
+    `5★率 ${star5Rate.toFixed(1)}%，1★率 ${star1Rate.toFixed(1)}%`,
+    `5★与1★极化分布反映用户体验两极分化`,
+    `中间段（2-4★）占比可辅助判断改善空间`
+  ]);
+  const npsAvg = npss.length ? (npss.reduce((a,b)=>a+b,0)/npss.length).toFixed(2) : '-';
+  setAutoNote('s-chartNpsTrend', [
+    `推荐度均分 ${npsAvg}（满分5分）`,
+    `推荐度与满意度相关性强，提升服务满意度是提高推荐意愿的核心路径`,
+    `推荐度低于满意度时，可能存在用户满意但不愿推荐的情况`
+  ]);
+  const resolvedRate = (resolved/total*100).toFixed(1);
+  setAutoNote('s-chartResolved', [
+    `整体解决率 ${resolvedRate}%，${resolvedRate >= 80 ? '整体表现良好' : '⚠️ 低于80%，需关注未解决工单'}`,
+    `解决率与满意度正相关：未解决工单的满意度均分通常低于已解决工单1-2分`,
+    `建议重点跟进解决率低的日期，排查是否有系统性问题`
+  ]);
+  const sortedByMean = regions.map((r,i)=>({r, m:regionMeans[i]})).filter(x=>x.m!=null).sort((a,b)=>b.m-a.m);
+  const topReg = sortedByMean[0]; const botReg = sortedByMean[sortedByMean.length-1];
+  setAutoNote('s-chartRegion', [
+    `${topReg?topReg.r:'-'} 满意度最高（${topReg?topReg.m:'-'}），${botReg?botReg.r:'-'} 最低（${botReg?botReg.m:'-'}）`,
+    `地区差异可能与物流时效、语言支持或当地客服配置有关`,
+    `建议对低分地区进行专项分析，识别是否存在系统性问题`
+  ]);
+  const topAgent = agentEntries[0]; const botAgent = agentEntries[agentEntries.length-1];
+  setAutoNote('s-chartAgent', [
+    `共 ${agentEntries.length} 位客服参与排名，${topAgent?topAgent.name:'-'} 满意度均分最高（${topAgent?topAgent.satMean.toFixed(2):'-'}）`,
+    `${botAgent?botAgent.name:'-'} 满意度均分最低（${botAgent?botAgent.satMean.toFixed(2):'-'}），建议重点辅导`,
+    `排名综合满意度均分和推荐度均分，样本量少的客服数据波动较大，需结合工单量判断`
+  ]);
+}
+
+// ==================== 过滤器初始化 ====================
+function initPubFilters() {
+  const pSents = [...new Set(pubData.map(d=>d.sentiment).filter(Boolean))];
+  const pPlats = [...new Set(pubData.map(d=>d.platform).filter(Boolean))];
+  const pCats = [...new Set(pubData.map(d=>d.category).filter(Boolean))];
+  const pCountries = [...new Set(pubData.map(d=>d.country).filter(Boolean))];
+  fillSelect('p-fSentiment', pSents, '全部情感');
+  fillSelect('p-fPlatform', pPlats, '全部平台');
+  fillSelect('p-fCategory', pCats, '全部类别');
+  fillSelect('p-fCountry', pCountries, '全部国家');
+  fillSelect('p-fIssueType', ISSUE_TYPES, '全部问题类型');
+}
+function initCompFilters() {
+  const cCats = [...new Set(compData.map(d=>d.category).filter(Boolean))];
+  const cRegs = [...new Set(compData.map(d=>d.region).filter(Boolean))];
+  fillSelect('c-fCategory', cCats, '全部类别');
+  fillSelect('c-fRegion', cRegs, '全部地区');
+  fillSelect('c-fIssueType', ISSUE_TYPES, '全部问题类型');
+}
+function initSurveyFilters() {
+  const regions = [...new Set(surveyData.map(d=>d.region).filter(r=>r))].sort();
+  fillSelect('s-tRegion', regions, '全部地区');
+}
+function fillSelect(id, options, placeholder) {
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.innerHTML = `<option value="">${placeholder}</option>` + options.map(o=>`<option value="${o}">${o}</option>`).join('');
+}
+
+// ==================== 表格渲染 ====================
+function getFilteredPub() {
+  const sent = document.getElementById('p-fSentiment')?.value||'';
+  const plat = document.getElementById('p-fPlatform')?.value||'';
+  const cat  = document.getElementById('p-fCategory')?.value||'';
+  const coun = document.getElementById('p-fCountry')?.value||'';
+  const issue= document.getElementById('p-fIssueType')?.value||'';
+  const kw   = (document.getElementById('p-search')?.value||'').toLowerCase();
+  return pubData.filter(d=>{
+    if(sent && d.sentiment!==sent) return false;
+    if(plat && d.platform!==plat) return false;
+    if(cat  && d.category!==cat) return false;
+    if(coun && d.country!==coun) return false;
+    if(issue && !(d.issue_types||[]).includes(issue)) return false;
+    if(kw && !JSON.stringify(d).toLowerCase().includes(kw)) return false;
+    return true;
+  });
+}
+function getFilteredComp() {
+  const cat  = document.getElementById('c-fCategory')?.value||'';
+  const reg  = document.getElementById('c-fRegion')?.value||'';
+  const issue= document.getElementById('c-fIssueType')?.value||'';
+  const pend = document.getElementById('c-fPending')?.value||'';
+  const kw   = (document.getElementById('c-search')?.value||'').toLowerCase();
+  return compData.filter(d=>{
+    if(cat  && d.category!==cat) return false;
+    if(reg  && d.region!==reg) return false;
+    if(issue && !(d.issue_types||[]).includes(issue)) return false;
+    if(pend==='pending' && !(d.issue_types||[]).includes('待确认')) return false;
+    if(pend==='edited' && !d.issue_types_editable) return false;
+    if(kw && !JSON.stringify(d).toLowerCase().includes(kw)) return false;
+    return true;
+  });
+}
+function sentBadge(s) {
+  const norm = s==='negative'?'负面':s==='positive'?'正面':s==='neutral'?'中性':s||'';
+  if(norm==='负面') return `<span class="sentiment-badge badge-neg">负面</span>`;
+  if(norm==='正面') return `<span class="sentiment-badge badge-pos">正面</span>`;
+  if(norm==='中性/正面') return `<span class="sentiment-badge badge-mix">中性/正面</span>`;
+  return `<span class="sentiment-badge badge-neu">${norm||'未知'}</span>`;
+}
+
+// 编辑器：使用数字索引而非 id 字符串，避免特殊字符问题
+// 差评类别编辑器
+const COMP_CATEGORIES = ['客服体验','物流配送','商城服务','产品体验','售后政策','其他','物流配送/客服体验'];
+function compCategoryEditorHtml(d, rowIdx) {
+  const editedMark = d.category_editable ? '<span class="edited-mark" title="已手动编辑">✎</span>' : '';
+  return `<div class="edit-cell" id="comp-cat-cell-${rowIdx}">
+    <span>${d.category||'-'}</span>${editedMark}
+    <button class="expand-btn" onclick="openCompCatEditor(event,${rowIdx})">✏ 编辑</button>
+    <div class="issue-editor" id="comp-cat-editor-${rowIdx}">
+      <h5>选择问题类别</h5>
+      <div style="margin-bottom:8px">
+        <select id="comp-cat-sel-${rowIdx}" style="width:100%;padding:5px 8px;border:1px solid #D1D5DB;border-radius:6px;font-size:12px">
+          ${COMP_CATEGORIES.map(c=>`<option value="${c}" ${c===d.category?'selected':''}>${c}</option>`).join('')}
+          <option value="__custom__">自定义输入…</option>
+        </select>
+      </div>
+      <div id="comp-cat-custom-${rowIdx}" style="display:none;margin-bottom:8px">
+        <input type="text" id="comp-cat-input-${rowIdx}" placeholder="输入自定义类别" style="width:100%;padding:5px 8px;border:1px solid #93C5FD;border-radius:6px;font-size:12px">
+      </div>
+      <div class="editor-actions">
+        <button class="btn-save" onclick="saveCompCatEdit(${rowIdx},'${String(d.id).replace(/'/g,'')}')">保存</button>
+        <button class="btn-cancel" onclick="closeEditor('comp-cat-editor-${rowIdx}')">取消</button>
+      </div>
+    </div>
+  </div>`;
+}
+function openCompCatEditor(e, rowIdx) {
+  e.stopPropagation();
+  if(activeEditor) closeEditor(activeEditor);
+  const editorId = `comp-cat-editor-${rowIdx}`;
+  const el = document.getElementById(editorId);
+  if(!el) return;
+  const sel = document.getElementById(`comp-cat-sel-${rowIdx}`);
+  const customDiv = document.getElementById(`comp-cat-custom-${rowIdx}`);
+  sel.onchange = () => { customDiv.style.display = sel.value === '__custom__' ? 'block' : 'none'; };
+  el.classList.add('show');
+  activeEditor = editorId;
+}
+function saveCompCatEdit(rowIdx, itemId) {
+  const sel = document.getElementById(`comp-cat-sel-${rowIdx}`);
+  const customInput = document.getElementById(`comp-cat-input-${rowIdx}`);
+  let newCat = sel.value === '__custom__' ? customInput.value.trim() : sel.value;
+  if(!newCat) { alert('请输入类别名称'); return; }
+  const idx = compData.findIndex(d => String(d.id) === String(itemId));
+  if(idx >= 0) {
+    compData[idx].category = newCat;
+    compData[idx].category_editable = true;
+    const weekKey = compData[idx].week ? `DATA_COMPLAINT_${compData[idx].week}` : '';
+    saveCompEdit(compData[idx].id, weekKey, compData[idx].issue_types||[], newCat);
+  }
+  closeEditor(`comp-cat-editor-${rowIdx}`);
+  renderCompTablePage();
+  renderCompCharts();
+}
+function issueTagsHtml(types, rowIdx, weekKey) {
+  if(!types||!types.length) types = ['待确认'];
+  const escapedWeek = weekKey.replace(/['"]/g, '');
+  return `<div class="edit-cell" id="cell-comp-${rowIdx}">
+    ${types.map(t=>`<span class="issue-tag${t==='待确认'?' pending':''}">${t}</span>`).join('')}
+    <button class="expand-btn" onclick="openEditor(event,'comp',${rowIdx})">✏ 编辑</button>
+    <div class="issue-editor" id="editor-comp-${rowIdx}">
+      <h5>选择问题类型</h5>
+      <div class="issue-checkboxes">
+        ${ISSUE_TYPES.map(t=>`<label><input type="checkbox" value="${t}" ${types.includes(t)?'checked':''}> ${t}</label>`).join('')}
+      </div>
+      <div class="editor-actions">
+        <button class="btn-save" onclick="saveEditorChanges('comp',${rowIdx},'${escapedWeek}')">保存</button>
+        <button class="btn-cancel" onclick="closeEditor('editor-comp-${rowIdx}')">取消</button>
+      </div>
+    </div>
+  </div>`;
+}
+function openEditor(e, dataType, rowIdx) {
+  e.stopPropagation();
+  if(activeEditor) closeEditor(activeEditor);
+  const editorId = `editor-${dataType}-${rowIdx}`;
+  const el = document.getElementById(editorId);
+  if(el) { el.classList.add('show'); activeEditor = editorId; }
+}
+function closeEditor(editorId) {
+  const el = document.getElementById(editorId);
+  if(el) el.classList.remove('show');
+  activeEditor = null;
+}
+function saveEditorChanges(dataType, rowIdx, weekKey) {
+  const editorId = `editor-${dataType}-${rowIdx}`;
+  const checkboxes = document.querySelectorAll(`#${editorId} input[type=checkbox]:checked`);
+  const labels = [...checkboxes].map(cb=>cb.value);
+  if(!labels.length) { alert('请至少选择一个问题类型'); return; }
+  if(dataType==='comp') {
+    // rowIdx 是当前页过滤后的索引，需要找到对应的 compData 项
+    const filtered = getFilteredComp();
+    const item = filtered[rowIdx];
+    if(!item) return;
+    const idx = compData.findIndex(d=>d.id===item.id && d.week===item.week);
+    if(idx>=0) {
+      compData[idx].issue_types = labels;
+      compData[idx].issue_types_editable = true;
+      const newCat = inferCategory(labels);
+      if(newCat) compData[idx].category = newCat;
+      // 找到该条目所属的周次 key
+      const itemWeekKey = compData[idx].week ? `DATA_COMPLAINT_${compData[idx].week}` : weekKey;
+      saveCompEdit(compData[idx].id, itemWeekKey, labels, newCat);
+    }
+    closeEditor(editorId);
+    renderCompTablePage();
+    renderCompCharts();
+  }
+}
+function inferCategory(labels) {
+  const hasLogistics = labels.some(t => LOGISTICS_TYPES.has(t));
+  const hasService = labels.some(t => SERVICE_TYPES.has(t));
+  if (hasLogistics && hasService) return '物流配送/客服体验';
+  if (hasLogistics) return '物流配送';
+  if (hasService) return '客服体验';
+  return null;
+}
+function toggleText(id) {
+  const el = document.getElementById(id);
+  if(!el) return;
+  const btn = document.getElementById('btn-'+id);
+  const isExpanded = el.classList.contains('expanded');
+  el.classList.toggle('expanded', !isExpanded);
+  if(btn) btn.textContent = isExpanded ? '展开' : '收起';
+}
+function renderPubTable() { pubPage=1; renderPubTablePage(); }
+function pubCategoryEditorHtml(d, rowIdx) {
+  const cats = [...new Set(pubData.map(x=>x.category).filter(Boolean))].sort();
+  const editedMark = d.category_editable ? '<span class="edited-mark" title="已手动编辑">✎</span>' : '';
+  return `<div class="edit-cell" id="pub-cat-cell-${rowIdx}">
+    <span>${d.category||'-'}</span>${editedMark}
+    <button class="expand-btn" onclick="openPubCatEditor(event,${rowIdx})">✏ 编辑</button>
+    <div class="issue-editor" id="pub-cat-editor-${rowIdx}">
+      <h5>选择问题类别</h5>
+      <div style="margin-bottom:8px">
+        <select id="pub-cat-sel-${rowIdx}" style="width:100%;padding:5px 8px;border:1px solid #D1D5DB;border-radius:6px;font-size:12px">
+          ${cats.map(c=>`<option value="${c}" ${c===d.category?'selected':''}>${c}</option>`).join('')}
+          <option value="__custom__">自定义输入…</option>
+        </select>
+      </div>
+      <div id="pub-cat-custom-${rowIdx}" style="display:none;margin-bottom:8px">
+        <input type="text" id="pub-cat-input-${rowIdx}" placeholder="输入自定义类别" style="width:100%;padding:5px 8px;border:1px solid #93C5FD;border-radius:6px;font-size:12px">
+      </div>
+      <div class="editor-actions">
+        <button class="btn-save" onclick="savePubCatEdit(${rowIdx},'${String(d.id).replace(/'/g,'')}')">保存</button>
+        <button class="btn-cancel" onclick="closeEditor('pub-cat-editor-${rowIdx}')">取消</button>
+      </div>
+    </div>
+  </div>`;
+}
+function pubIssueEditorHtml(d, rowIdx) {
+  const types = d.issue_types || [];
+  const editedMark = d.issue_types_editable ? '<span class="edited-mark" title="已手动编辑">✎</span>' : '';
+  return `<div class="edit-cell" id="pub-issue-cell-${rowIdx}">
+    ${types.length ? types.map(t=>`<span class="issue-tag${t==='待确认'?' pending':''}">${t}</span>`).join('') : '<span class="issue-tag pending">待确认</span>'}
+    ${editedMark}
+    <button class="expand-btn" onclick="openEditor(event,'pub-issue',${rowIdx})">✏ 编辑</button>
+    <div class="issue-editor" id="editor-pub-issue-${rowIdx}">
+      <h5>选择问题类型</h5>
+      <div class="issue-checkboxes">
+        ${ISSUE_TYPES.map(t=>`<label><input type="checkbox" value="${t}" ${types.includes(t)?'checked':''}> ${t}</label>`).join('')}
+      </div>
+      <div style="margin-bottom:8px">
+        <input type="text" id="pub-issue-custom-${rowIdx}" placeholder="自定义标签（多个用逗号分隔）" style="width:100%;padding:5px 8px;border:1px solid #D1D5DB;border-radius:6px;font-size:11px">
+      </div>
+      <div class="editor-actions">
+        <button class="btn-save" onclick="savePubIssueEdit(${rowIdx},'${String(d.id).replace(/'/g,'')}')">保存</button>
+        <button class="btn-cancel" onclick="closeEditor('editor-pub-issue-${rowIdx}')">取消</button>
+      </div>
+    </div>
+  </div>`;
+}
+function openPubCatEditor(e, rowIdx) {
+  e.stopPropagation();
+  if(activeEditor) closeEditor(activeEditor);
+  const editorId = `pub-cat-editor-${rowIdx}`;
+  const el = document.getElementById(editorId);
+  if(!el) return;
+  // 监听 select 变化
+  const sel = document.getElementById(`pub-cat-sel-${rowIdx}`);
+  const customDiv = document.getElementById(`pub-cat-custom-${rowIdx}`);
+  sel.onchange = () => { customDiv.style.display = sel.value === '__custom__' ? 'block' : 'none'; };
+  el.classList.add('show');
+  activeEditor = editorId;
+}
+function savePubCatEdit(rowIdx, itemId) {
+  const sel = document.getElementById(`pub-cat-sel-${rowIdx}`);
+  const customInput = document.getElementById(`pub-cat-input-${rowIdx}`);
+  let newCat = sel.value === '__custom__' ? customInput.value.trim() : sel.value;
+  if(!newCat) { alert('请输入类别名称'); return; }
+  const idx = pubData.findIndex(d => String(d.id) === String(itemId));
+  if(idx >= 0) {
+    pubData[idx].category = newCat;
+    pubData[idx].category_editable = true;
+    const monthKey = findPubMonthKey(pubData[idx]);
+    savePubEdit(pubData[idx].id, monthKey, null, newCat);
+  }
+  closeEditor(`pub-cat-editor-${rowIdx}`);
+  renderPubTablePage();
+  renderPubCharts();
+}
+function savePubIssueEdit(rowIdx, itemId) {
+  const editorId = `editor-pub-issue-${rowIdx}`;
+  const checkboxes = document.querySelectorAll(`#${editorId} input[type=checkbox]:checked`);
+  const labels = [...checkboxes].map(cb => cb.value);
+  const customInput = document.getElementById(`pub-issue-custom-${rowIdx}`);
+  if(customInput && customInput.value.trim()) {
+    customInput.value.split(',').map(s=>s.trim()).filter(Boolean).forEach(t => { if(!labels.includes(t)) labels.push(t); });
+  }
+  if(!labels.length) { alert('请至少选择一个问题类型'); return; }
+  const idx = pubData.findIndex(d => String(d.id) === String(itemId));
+  if(idx >= 0) {
+    pubData[idx].issue_types = labels;
+    pubData[idx].issue_types_editable = true;
+    const monthKey = findPubMonthKey(pubData[idx]);
+    savePubEdit(pubData[idx].id, monthKey, labels, null);
+  }
+  closeEditor(editorId);
+  renderPubTablePage();
+  renderPubCharts();
+}
+function findPubMonthKey(item) {
+  // 根据数据项的 source_month 字段或日期匹配月份 key
+  const cfg = window.REPORT_CONFIG;
+  if(item.source_month) {
+    const m = cfg.publicMonths.find(m => m.key === item.source_month);
+    if(m) return m.key;
+  }
+  // 回退：用当前选中的第一个月份 key
+  return selectedPubMonths[0] || '';
+}
+function renderPubTablePage() {
+  const filtered = getFilteredPub();
+  const total = filtered.length;
+  const pages = Math.ceil(total/PAGE_SIZE)||1;
+  if(pubPage>pages) pubPage=pages;
+  const slice = filtered.slice((pubPage-1)*PAGE_SIZE, pubPage*PAGE_SIZE);
+  const startIdx = (pubPage-1)*PAGE_SIZE;
+  let html = `<table><thead><tr>
+    <th>#</th><th>日期</th><th>平台</th><th>国家/地区</th><th>类别</th><th>情感</th>
+    <th>问题类型</th><th style="min-width:200px">中文翻译</th><th style="min-width:200px">英文原文</th><th>链接</th>
+  </tr></thead><tbody>`;
+  slice.forEach((d,i)=>{
+    const rowIdx = startIdx + i;
+    html += `<tr>
+      <td style="text-align:center">${rowIdx+1}</td>
+      <td style="white-space:nowrap">${d.date||''}</td>
+      <td>${d.platform||''}</td>
+      <td>${d.country||''}</td>
+      <td>${pubCategoryEditorHtml(d, rowIdx)}</td>
+      <td>${sentBadge(d.sentiment)}</td>
+      <td>${pubIssueEditorHtml(d, rowIdx)}</td>
+      <td><div class="text-preview" id="p-zh-${rowIdx}">${d.chinese||''}</div><button class="expand-btn" id="btn-p-zh-${rowIdx}" onclick="toggleText('p-zh-${rowIdx}')">展开</button></td>
+      <td><div class="text-preview" id="p-en-${rowIdx}">${d.original||''}</div><button class="expand-btn" id="btn-p-en-${rowIdx}" onclick="toggleText('p-en-${rowIdx}')">展开</button></td>
+      <td>${d.url?`<a href="${d.url}" target="_blank" style="color:#2563EB;font-size:11px">🔗</a>`:''}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('pub-table-wrap').innerHTML = html;
+  renderPagination('pub-pagination', pages, pubPage, p=>{ pubPage=p; renderPubTablePage(); });
+}
+function renderCompTable() { compPage=1; renderCompTablePage(); }
+function renderCompTablePage() {
+  const filtered = getFilteredComp();
+  const total = filtered.length;
+  const pages = Math.ceil(total/PAGE_SIZE)||1;
+  if(compPage>pages) compPage=pages;
+  const slice = filtered.slice((compPage-1)*PAGE_SIZE, compPage*PAGE_SIZE);
+  // 计算每个 slice 项在 filtered 中的全局索引（用于编辑器）
+  const startIdx = (compPage-1)*PAGE_SIZE;
+  let html = `<table><thead><tr>
+    <th>#</th><th>周次</th><th>日期范围</th><th>地区</th><th>类别</th>
+    <th>问题类型</th><th style="min-width:200px">中文翻译</th><th style="min-width:200px">英文原文</th>
+  </tr></thead><tbody>`;
+  slice.forEach((d,i)=>{
+    const globalIdx = startIdx + i;
+    const isPending = (d.issue_types||[]).includes('待确认');
+    const rowClass = isPending ? 'pending' : '';
+    const editedMark = d.issue_types_editable ? '<span class="edited-mark" title="已手动编辑">✎</span>' : '';
+    const weekKey = d.week ? `DATA_COMPLAINT_${d.week}` : '';
+    html += `<tr class="${rowClass}">
+      <td style="text-align:center">${startIdx+i+1}</td>
+      <td style="text-align:center;white-space:nowrap">${d.week||''}</td>
+      <td style="white-space:nowrap">${d.date_range||''}</td>
+      <td style="text-align:center">${d.region||''}</td>
+      <td>${compCategoryEditorHtml(d, globalIdx)}</td>
+      <td>${issueTagsHtml(d.issue_types, globalIdx, weekKey)}${editedMark}</td>
+      <td><div class="text-preview" id="c-zh-${globalIdx}">${d.chinese||''}</div><button class="expand-btn" id="btn-c-zh-${globalIdx}" onclick="toggleText('c-zh-${globalIdx}')">展开</button></td>
+      <td><div class="text-preview" id="c-en-${globalIdx}">${d.original||''}</div><button class="expand-btn" id="btn-c-en-${globalIdx}" onclick="toggleText('c-en-${globalIdx}')">展开</button></td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('comp-table-wrap').innerHTML = html;
+  renderPagination('comp-pagination', pages, compPage, p=>{ compPage=p; renderCompTablePage(); });
+}
+function renderSurveyTable() {
+  const region  = document.getElementById('s-tRegion')?.value||'';
+  const resolved= document.getElementById('s-tResolved')?.value||'';
+  const satFilter = document.getElementById('s-tSat')?.value||'';
+  const kw      = (document.getElementById('s-tSearch')?.value||'').toLowerCase();
+  const items = surveyData.filter(d => {
+    if(region && d.region !== region) return false;
+    // resolved 字段可能是布尔或字符串，统一转换比较
+    if(resolved === 'true'  && d.resolved !== true  && d.resolved !== 'true')  return false;
+    if(resolved === 'false' && d.resolved !== false && d.resolved !== 'false') return false;
+    if(satFilter === 'low'  && (d.satisfaction == null || Number(d.satisfaction) > 2)) return false;
+    if(satFilter === 'high' && (d.satisfaction == null || Number(d.satisfaction) < 4)) return false;
+    if(kw && !JSON.stringify(d).toLowerCase().includes(kw)) return false;
+    return true;
+  });
+  surveyTablePage = 1;
+  renderSurveyTablePage(items);
+}
+function renderSurveyTablePage(items) {
+  if(!items) { renderSurveyTable(); return; }
+  const total = items.length;
+  const totalPages = Math.ceil(total / SURVEY_PAGE_SIZE);
+  const start = (surveyTablePage - 1) * SURVEY_PAGE_SIZE;
+  const pageItems = items.slice(start, start + SURVEY_PAGE_SIZE);
+  document.getElementById('survey-filter-stats').textContent = `共 ${total} 条记录`;
+  const wrap = document.getElementById('survey-table-wrap');
+  if(!pageItems.length) { wrap.innerHTML = '<p style="color:#94A3B8;text-align:center;padding:20px">无匹配数据</p>'; return; }
+  wrap.innerHTML = `<table>
+    <thead><tr>
+      <th>#</th><th>周次</th><th>日期</th><th>工单号</th><th>地区</th><th>客服</th><th>满意度</th><th>推荐度</th><th>解决状态</th><th>工单类型</th><th>标签</th><th>文字反馈</th>
+    </tr></thead>
+    <tbody>${pageItems.map((d,i) => `<tr>
+      <td>${start+i+1}</td>
+      <td style="white-space:nowrap">${d.week||'-'}</td>
+      <td>${d.date||'-'}</td>
+      <td style="font-size:11px">${d.csm||'-'}</td>
+      <td>${d.region||'-'}</td>
+      <td>${d.agent||'-'}</td>
+      <td style="color:${d.satisfaction<=2?'#EF4444':d.satisfaction>=4?'#10B981':'#F59E0B'};font-weight:600">${d.satisfaction!=null?d.satisfaction+'★':'-'}</td>
+      <td>${d.nps!=null?d.nps+'★':'-'}</td>
+      <td style="color:${(d.resolved===true||d.resolved==='true')?'#10B981':(d.resolved===false||d.resolved==='false')?'#EF4444':'#94A3B8'}">${(d.resolved===true||d.resolved==='true')?'已解决':(d.resolved===false||d.resolved==='false')?'未解决':'-'}</td>
+      <td style="font-size:11px;max-width:140px;word-break:break-word">${translateIssueType(d.issue_type_1)}</td>
+      <td style="font-size:11px">${(Array.isArray(d.tags)?d.tags:d.tags?[d.tags]:[]).map(translateTag).join('<br>')||'-'}</td>
+      <td style="font-size:11px;max-width:200px;word-break:break-word">${(d.feedback||'-').replace(/\n/g,'<br>').slice(0,120)}${(d.feedback||'').length>120?'…':''}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+  const pag = document.getElementById('survey-pagination');
+  if(totalPages <= 1) { pag.innerHTML = ''; return; }
+  let btns = '';
+  if(surveyTablePage > 1) btns += `<button class="page-btn" onclick="surveyGoPage(${surveyTablePage-1})">‹</button>`;
+  for(let p=Math.max(1,surveyTablePage-2); p<=Math.min(totalPages,surveyTablePage+2); p++) {
+    btns += `<button class="page-btn${p===surveyTablePage?' active':''}" onclick="surveyGoPage(${p})">${p}</button>`;
+  }
+  if(surveyTablePage < totalPages) btns += `<button class="page-btn" onclick="surveyGoPage(${surveyTablePage+1})">›</button>`;
+  pag.innerHTML = btns;
+  // 存储当前 items 供翻页使用
+  window._currentSurveyItems = items;
+}
+function surveyGoPage(p) {
+  surveyTablePage = p;
+  renderSurveyTablePage(window._currentSurveyItems);
+}
+
+function renderPagination(containerId, pages, current, onClick) {
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  let html = `<button class="page-btn" onclick="(${onClick.toString()})(${current-1})" ${current<=1?'disabled':''}>‹</button>`;
+  const range = [];
+  for(let i=1;i<=pages;i++) {
+    if(i===1||i===pages||Math.abs(i-current)<=2) range.push(i);
+    else if(range[range.length-1]!=='…') range.push('…');
+  }
+  range.forEach(p=>{
+    if(p==='…') html+=`<span style="padding:6px 4px;color:#94A3B8">…</span>`;
+    else html+=`<button class="page-btn${p===current?' active':''}" onclick="(${onClick.toString()})(${p})">${p}</button>`;
+  });
+  html+=`<button class="page-btn" onclick="(${onClick.toString()})(${current+1})" ${current>=pages?'disabled':''}>›</button>`;
+  el.innerHTML = html;
+}
+
+// ==================== Tab 切换 ====================
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  const btn = document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`);
+  if(btn) btn.classList.add('active');
+  // survey 已在 initAllSelectors 中预加载，无需在切换时重复加载
+}
+
+// ==================== 关闭编辑器（点击外部） ====================
+document.addEventListener('click', function(e) {
+  if(activeEditor && !e.target.closest('.edit-cell')) {
+    closeEditor(activeEditor);
+  }
+  // 关闭多选下拉（点击外部）
+  if(!e.target.closest('.multi-week-wrapper')) {
+    document.querySelectorAll('.multi-week-dropdown').forEach(d => d.classList.remove('open'));
+    document.querySelectorAll('.multi-week-trigger').forEach(t => t.classList.remove('open'));
+  }
+});
+
+// ==================== 导出当前状态为独立HTML ====================
+// ==================== 复制分享链接 ====================
+function copyShareLink() {
+  // 获取当前激活的 Tab
+  const activeTab = document.querySelector('.tab-btn.active');
+  let tabParam = 'public';
+  if(activeTab) {
+    const onclickStr = activeTab.getAttribute('onclick') || '';
+    const m = onclickStr.match(/switchTab\('(\w+)'\)/);
+    if(m) tabParam = m[1];
+  }
+  const base = window.location.origin + window.location.pathname;
+  const shareUrl = `${base}?readonly=1&tab=${tabParam}`;
+  if(navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      const btn = document.getElementById('btn-share-link');
+      const orig = btn.textContent;
+      btn.textContent = '✅ 已复制！';
+      btn.style.background = '#10B981';
+      setTimeout(() => { btn.textContent = orig; btn.style.background = '#059669'; }, 2000);
+    });
+  } else {
+    prompt('请手动复制以下链接：', shareUrl);
+  }
+}
+
+// ==================== 只读模式 ====================
+function applyReadonlyMode() {
+  // 注入只读 CSS：隐藏所有编辑按钮、分享按钮、周次/月份选择器、说明编辑区域
+  const style = document.createElement('style');
+  style.id = 'readonly-style';
+  style.textContent = `
+    /* 只读模式：隐藏编辑相关元素 */
+    .edit-cell button,
+    #btn-share-link,
+    .period-selector,
+    .week-selector-row,
+    .issue-editor, .cat-editor,
+    .edited-mark { display: none !important; }
+    /* 只读标识 */
+    #readonly-badge { display: flex !important; }
+    /* 说明区域保留显示但禁用点击 */
+    .chart-note { cursor: default !important; pointer-events: none !important; }
+  `;
+  // 移除说明区域的 onclick 和 title，防止用户误操作
+  document.querySelectorAll('.chart-note').forEach(el => {
+    el.removeAttribute('onclick');
+    el.removeAttribute('title');
+  });
+  document.head.appendChild(style);
+
+  // 显示只读标识
+  const badge = document.getElementById('readonly-badge');
+  if(badge) badge.style.display = 'flex';
+}
+
+// ==================== 初始化 ====================
+document.addEventListener('DOMContentLoaded', function() {
+  const params = new URLSearchParams(window.location.search);
+  const isReadonly = params.get('readonly') === '1';
+  const tabParam = params.get('tab');
+
+  if(!window.__EXPORT_MODE__) {
+    initAllSelectors();
+  }
+
+  // 切换到 URL 指定的 Tab
+  if(tabParam) {
+    switchTab(tabParam);
+  }
+
+  // 应用只读模式（在数据加载完成后稍作延迟，确保 DOM 已渲染）
+  if(isReadonly) {
+    applyReadonlyMode();
+    // 延迟再次应用，确保动态渲染的编辑按钮也被隐藏
+    setTimeout(applyReadonlyMode, 500);
+    setTimeout(applyReadonlyMode, 1500);
+  }
+});
+</script>
+</body>
+</html>
