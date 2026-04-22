@@ -1496,10 +1496,11 @@ function pubIssueEditorHtml(d, rowIdx) {
     <div class="issue-editor" id="editor-pub-issue-${rowIdx}">
       <h5>选择问题类型</h5>
       <div class="issue-checkboxes">
-        ${ISSUE_TYPES.map(t=>`<label><input type="checkbox" value="${t}" ${types.includes(t)?'checked':''}> ${t}</label>`).join('')}
+        ${[...ISSUE_TYPES, ...getCustomIssueTypes().filter(t=>!ISSUE_TYPES.includes(t))].map(t=>`<label><input type="checkbox" value="${t}" ${types.includes(t)?'checked':''}> ${t}</label>`).join('')}
       </div>
       <div style="margin-bottom:8px">
-        <input type="text" id="pub-issue-custom-${rowIdx}" placeholder="自定义标签（多个用逗号分隔）" style="width:100%;padding:5px 8px;border:1px solid #D1D5DB;border-radius:6px;font-size:11px">
+        <div style="font-size:11px;color:#6B7280;margin-bottom:4px">新增自定义标签（多个用逗号分隔）：</div>
+        <input type="text" id="pub-issue-custom-${rowIdx}" placeholder="输入后保存将自动记住" style="width:100%;padding:5px 8px;border:1px solid #D1D5DB;border-radius:6px;font-size:11px">
       </div>
       <div class="editor-actions">
         <button class="btn-save" onclick="savePubIssueEdit(${rowIdx},'${String(d.id).replace(/'/g,'')}')">保存</button>
@@ -1543,7 +1544,9 @@ function savePubIssueEdit(rowIdx, itemId) {
   const labels = [...checkboxes].map(cb => cb.value);
   const customInput = document.getElementById(`pub-issue-custom-${rowIdx}`);
   if(customInput && customInput.value.trim()) {
-    customInput.value.split(',').map(s=>s.trim()).filter(Boolean).forEach(t => { if(!labels.includes(t)) labels.push(t); });
+    const newCustomTags = customInput.value.split(',').map(s=>s.trim()).filter(Boolean);
+    newCustomTags.forEach(t => { if(!labels.includes(t)) labels.push(t); });
+    addCustomIssueTypes(newCustomTags);
   }
   if(!labels.length) { alert('请至少选择一个问题类型'); return; }
   const idx = pubData.findIndex(d => String(d.id) === String(itemId));
