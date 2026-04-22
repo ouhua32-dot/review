@@ -392,6 +392,19 @@ const ISSUE_TYPES = [
   "产品质量差","定价过高","发票问题","折扣优惠码使用有问题",
   "运费太贵","网站信息混乱","待确认"
 ];
+// 自定义标签持久化：从 localStorage 读写用户曾经输入过的自定义标签
+function getCustomIssueTypes() {
+  try { return JSON.parse(localStorage.getItem('bambu_custom_issue_types') || '[]'); } catch(e) { return []; }
+}
+function saveCustomIssueTypes(arr) {
+  try { localStorage.setItem('bambu_custom_issue_types', JSON.stringify(arr)); } catch(e) {}
+}
+function addCustomIssueTypes(newTags) {
+  const existing = getCustomIssueTypes();
+  let changed = false;
+  newTags.forEach(t => { if(!ISSUE_TYPES.includes(t) && !existing.includes(t)) { existing.push(t); changed = true; } });
+  if(changed) saveCustomIssueTypes(existing);
+}
 const LOGISTICS_TYPES = new Set(["发货延迟/ETD不准","超长收货时间","包裹丢失/未收到","包裹被误送","包裹被分批发货","物流供应商服务差","没有提供物流轨迹更新信息"]);
 const SERVICE_TYPES = new Set(["客服响应速度慢","客服回复周期长","反复诊断但始终得不到解决","问题未解决，工单被提前关闭","AI回复体验差","退款/退货障碍","企业客户体验不佳"]);
 const COLORS = ['#2563EB','#EF4444','#22C55E','#F59E0B','#8B5CF6','#EC4899','#06B6D4','#F97316','#10B981','#6366F1','#14B8A6','#F43F5E','#84CC16','#A855F7','#0EA5E9','#FB923C','#34D399','#818CF8','#2DD4BF','#FB7185','#A3E635','#C084FC','#38BDF8','#FDBA74','#6EE7B7','#A5B4FC','#5EEAD4'];
@@ -1361,17 +1374,22 @@ function saveCompCatEdit(rowIdx, itemId) {
 function issueTagsHtml(types, rowIdx, weekKey) {
   if(!types||!types.length) types = ['待确认'];
   const escapedWeek = weekKey.replace(/['"]/g, '');
+  // 合并预设标签 + 历史自定义标签
+  const customSaved = getCustomIssueTypes();
+  const allTypes = [...ISSUE_TYPES, ...customSaved.filter(t=>!ISSUE_TYPES.includes(t))];
+  // 当前条目中属于自定义（不在预设里）的标签，回填到输入框
+  const currentCustom = types.filter(t=>!ISSUE_TYPES.includes(t) && t!=='待确认');
   return `<div class="edit-cell" id="cell-comp-${rowIdx}">
     ${types.map(t=>`<span class="issue-tag${t==='待确认'?' pending':''}">${t}</span>`).join('')}
     <button class="expand-btn" onclick="openEditor(event,'comp',${rowIdx})">✏ 编辑</button>
     <div class="issue-editor" id="editor-comp-${rowIdx}">
       <h5>选择问题类型</h5>
       <div class="issue-checkboxes">
-        ${ISSUE_TYPES.map(t=>`<label><input type="checkbox" value="${t}" ${types.includes(t)?'checked':''}> ${t}</label>`).join('')}
+        ${allTypes.map(t=>`<label><input type="checkbox" value="${t}" ${types.includes(t)?'checked':''}> ${t}</label>`).join('')}
       </div>
       <div style="margin-top:6px">
-        <div style="font-size:11px;color:#6B7280;margin-bottom:4px">自定义标签（多个用逗号分隔）：</div>
-        <input type="text" id="comp-issue-custom-${rowIdx}" placeholder="例：产品质量差,定价过高" style="width:100%;padding:5px 8px;border:1px solid #D1D5DB;border-radius:6px;font-size:11px">
+        <div style="font-size:11px;color:#6B7280;margin-bottom:4px">新增自定义标签（多个用逗号分隔）：</div>
+        <input type="text" id="comp-issue-custom-${rowIdx}" placeholder="输入后保存将自动记住" value="" style="width:100%;padding:5px 8px;border:1px solid #D1D5DB;border-radius:6px;font-size:11px">
       </div>
       <div class="editor-actions">
         <button class="btn-save" onclick="saveEditorChanges('comp',${rowIdx},'${escapedWeek}')">保存</button>
@@ -1396,11 +1414,14 @@ function saveEditorChanges(dataType, rowIdx, weekKey) {
   const editorId = `editor-${dataType}-${rowIdx}`;
   const checkboxes = document.querySelectorAll(`#${editorId} input[type=checkbox]:checked`);
   const labels = [...checkboxes].map(cb=>cb.value);
-  // 合并自定义标签
+  // 合并自定义标签，并持久化到 localStorage
   if(dataType==='comp') {
     const customInput = document.getElementById(`comp-issue-custom-${rowIdx}`);
     if(customInput && customInput.value.trim()) {
-      customInput.value.split(',').map(s=>s.trim()).filter(Boolean).forEach(t => { if(!labels.includes(t)) labels.push(t); });
+      const newCustomTags = customInput.value.split(',').map(s=>s.trim()).filter(Boolean);
+      newCustomTags.forEach(t => { if(!labels.includes(t)) labels.push(t); });
+      // 将新增的自定义标签保存到 localStorage，下次打开编辑器时自动出现在 checkbox 列表
+      addCustomIssueTypes(newCustomTags);
     }
   }
   if(!labels.length) { alert('请至少选择一个问题类型'); return; }
