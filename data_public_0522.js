@@ -14,7 +14,7 @@ window.PUBLIC_REVIEWS_0522 = [
     ],
     "issue_types_editable": false,
     "author": "",
-    "url": "https://www.trustpilot.com/reviews/6a0129ab0790081d557d9706"
+    "url": "https://www.trustpilot.com/reviews/6a025cf3dc6a89d8b16e80cb"
   },
   {
     "id": "TP-002",
@@ -31,7 +31,7 @@ window.PUBLIC_REVIEWS_0522 = [
     ],
     "issue_types_editable": false,
     "author": "",
-    "url": "https://www.trustpilot.com/reviews/6a015f7d3e8bdaeef14dd9cf"
+    "url": "https://www.trustpilot.com/reviews/6a0140078e5a3e1f159d3411"
   },
   {
     "id": "TP-003",
@@ -48,7 +48,7 @@ window.PUBLIC_REVIEWS_0522 = [
     ],
     "issue_types_editable": false,
     "author": "",
-    "url": "https://www.trustpilot.com/reviews/6a01275ecd3fadb26219752f"
+    "url": "https://www.trustpilot.com/reviews/6a01359dd50bd69957cb63d4"
   },
   {
     "id": "TP-004",
@@ -439,7 +439,7 @@ window.PUBLIC_REVIEWS_0522 = [
     ],
     "issue_types_editable": false,
     "author": "",
-    "url": "https://www.trustpilot.com/reviews/6a015367a90b0f576d6437f8"
+    "url": "https://www.trustpilot.com/reviews/6a016618085dcafc0eb85a82"
   },
   {
     "id": "TP-027",
@@ -456,7 +456,7 @@ window.PUBLIC_REVIEWS_0522 = [
     ],
     "issue_types_editable": false,
     "author": "",
-    "url": "https://www.trustpilot.com/reviews/6a015b29d821953128a19849"
+    "url": "https://www.trustpilot.com/reviews/6a01602b720e95ecc163838a"
   },
   {
     "id": "TP-028",
@@ -541,7 +541,7 @@ window.PUBLIC_REVIEWS_0522 = [
     ],
     "issue_types_editable": false,
     "author": "",
-    "url": "https://www.trustpilot.com/reviews/6a015367a90b0f576d6437f8"
+    "url": "https://www.trustpilot.com/reviews/6a014593f66667262ccb286f"
   },
   {
     "id": "TP-033",
@@ -677,7 +677,7 @@ window.PUBLIC_REVIEWS_0522 = [
     ],
     "issue_types_editable": false,
     "author": "",
-    "url": "https://www.trustpilot.com/reviews/6a01346001bfcdf791939865"
+    "url": "https://www.trustpilot.com/reviews/6a012babf383eba0bc854f12"
   },
   {
     "id": "TP-041",
@@ -796,7 +796,7 @@ window.PUBLIC_REVIEWS_0522 = [
     ],
     "issue_types_editable": false,
     "author": "",
-    "url": "https://www.trustpilot.com/reviews/6a015d6fafd0dc1b73b38b4e"
+    "url": "https://www.trustpilot.com/reviews/6a012571009069e6d718a3bb"
   },
   {
     "id": "TP-048",
@@ -881,7 +881,7 @@ window.PUBLIC_REVIEWS_0522 = [
     ],
     "issue_types_editable": false,
     "author": "",
-    "url": "https://www.trustpilot.com/reviews/6a0128b1ed7f2c91594536bd"
+    "url": "https://www.trustpilot.com/reviews/6a02663670669e7a076c29a0"
   },
   {
     "id": "TP-053",
@@ -898,7 +898,7 @@ window.PUBLIC_REVIEWS_0522 = [
     ],
     "issue_types_editable": false,
     "author": "",
-    "url": "https://www.trustpilot.com/reviews/6a012ab84d170710b406a89d"
+    "url": "https://www.trustpilot.com/reviews/6a02662b82a3be20261bdd1a"
   },
   {
     "id": "TP-054",
@@ -915,7 +915,7 @@ window.PUBLIC_REVIEWS_0522 = [
     ],
     "issue_types_editable": false,
     "author": "",
-    "url": "https://www.trustpilot.com/reviews/6a015d6fafd0dc1b73b38b4e"
+    "url": "https://www.trustpilot.com/reviews/6a025516f5f009020d388b10"
   },
   {
     "id": "TP-055",
@@ -932,7 +932,7 @@ window.PUBLIC_REVIEWS_0522 = [
     ],
     "issue_types_editable": false,
     "author": "",
-    "url": "https://www.trustpilot.com/reviews/6a01227a5663c37b0eecb739"
+    "url": "https://www.trustpilot.com/reviews/6a0249bbbe4efe8522ececb9"
   },
   {
     "id": "TP-056",
@@ -949,7 +949,7 @@ window.PUBLIC_REVIEWS_0522 = [
     ],
     "issue_types_editable": false,
     "author": "",
-    "url": "https://www.trustpilot.com/reviews/6a023f8c42a31ebd98a287e2"
+    "url": "https://www.trustpilot.com/reviews/6a023d826da8fcfa8ef9a179"
   },
   {
     "id": "TP-057",
