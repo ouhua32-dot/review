@@ -34,6 +34,13 @@ window.REPORT_CONFIG = {
       file: "data_public_0522.js",
       dateRange: "2026-04-22 ~ 2026-05-11",
       count: 105
+    },
+    {
+      label: "0529双周会",
+      key: "DATA_PUBLIC_0529",
+      file: "data_public_0529.js",
+      dateRange: "2026-05-12 ~ 2026-05-24",
+      count: 105
     }
   ],
 
@@ -116,7 +123,15 @@ window.REPORT_CONFIG = {
       file: "data_complaint_w19.js",
       dateRange: "2026-05-04 ~ 2026-05-11",
       count: 128
+    },
+    {
+      "label": "W20（2026-05-18 ~ 2026-05-24）",
+      "key": "DATA_COMPLAINT_W20",
+      "file": "data_complaint_w20.js",
+      "dateRange": "2026-05-18 ~ 2026-05-24",
+      "count": 119
     }
+  
   ],
 
   // ===== 满意度问卷周次配置 =====
@@ -197,6 +212,14 @@ window.REPORT_CONFIG = {
       file: "data_survey_w19.js",
       dateRange: "2026-05-04 ~ 2026-05-11",
       count: 280
+    },
+    {
+      "label": "W20（2026-05-18 ~ 2026-05-24）",
+      "key": "DATA_SURVEY_W20",
+      "file": "data_survey_w20.js",
+      "dateRange": "2026-05-18 ~ 2026-05-24",
+      "count": 239
     }
+  
   ]
 };
